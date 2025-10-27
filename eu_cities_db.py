@@ -352,7 +352,7 @@ def get_nearest_city(lat: float, lon: float, max_distance: float = 200.0) -> Opt
         max_distance: Maximum search distance in km (default 200)
     
     Returns:
-        Dict with city name and distance, or None if not found
+        Dict with city name, coordinates, population and distance, or None if not found
     """
     import math
     
@@ -374,6 +374,12 @@ def get_nearest_city(lat: float, lon: float, max_distance: float = 200.0) -> Opt
             dist = haversine(lat, lon, city["lat"], city["lon"])
             if dist < nearest_dist and dist <= max_distance:
                 nearest_dist = dist
-                nearest = {"name": city["name"], "distance_km": dist}
+                nearest = {
+                    "name": city["name"],
+                    "lat": city["lat"],
+                    "lon": city["lon"],
+                    "pop": city.get("pop", 0),
+                    "distance_km": dist
+                }
     
     return nearest if nearest else None

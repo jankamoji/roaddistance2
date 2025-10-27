@@ -160,17 +160,9 @@ def create_site_selection_format(df_results: pd.DataFrame, ref_name: str = None,
         site_name = row.get("Site Name", "")
         lat = row.get("Latitude", "")
         lon = row.get("Longitude", "")
+        nuts3_code = row.get("NUTS3 Code", "")
         
-        # Extract catchment data if available
-        pop_col = f"Catchment Population ({catchment_radius}km)"
-        unemployed_col = f"Catchment Unemployed ({catchment_radius}km)"
-        active_col = f"Catchment Active Pop ({catchment_radius}km)"
-        
-        catchment_pop = row.get(pop_col, "")
-        catchment_unemployed = row.get(unemployed_col, "")
-        catchment_active = row.get(active_col, "")
-        
-        # Airport record
+        # Airport record (Accessibility: 1)
         if pd.notna(row.get("Nearest Airport")):
             long_format_rows.append({
                 "Project ID": project_id,
@@ -184,12 +176,10 @@ def create_site_selection_format(df_results: pd.DataFrame, ref_name: str = None,
                 "Distance (km)": row.get("Distance to Airport (km)", ""),
                 "Time (min)": row.get("Time to Airport (min)", ""),
                 "Accessibility": 1,
-                "Catchment Population": catchment_pop,
-                "Catchment Unemployed": catchment_unemployed,
-                "Catchment Active Population": catchment_active
+                "NUTS3 Code": nuts3_code
             })
         
-        # Seaport record
+        # Seaport record (renamed to "Inbound", Accessibility: 0)
         if pd.notna(row.get("Nearest Seaport")):
             long_format_rows.append({
                 "Project ID": project_id,
@@ -199,16 +189,14 @@ def create_site_selection_format(df_results: pd.DataFrame, ref_name: str = None,
                 "LatitudeY": lat,
                 "LongitudeX": lon,
                 "Destination": row.get("Nearest Seaport", ""),
-                "Destination group": "Nearest Port",
+                "Destination group": "Inbound",
                 "Distance (km)": row.get("Distance to Seaport (km)", ""),
                 "Time (min)": row.get("Time to Seaport (min)", ""),
-                "Accessibility": 1,
-                "Catchment Population": catchment_pop,
-                "Catchment Unemployed": catchment_unemployed,
-                "Catchment Active Population": catchment_active
+                "Accessibility": 0,
+                "NUTS3 Code": nuts3_code
             })
         
-        # Highway record
+        # Highway record (Accessibility: 1)
         if pd.notna(row.get("Nearest Highway Access")):
             long_format_rows.append({
                 "Project ID": project_id,
@@ -222,12 +210,10 @@ def create_site_selection_format(df_results: pd.DataFrame, ref_name: str = None,
                 "Distance (km)": row.get("Distance to Highway (km)", ""),
                 "Time (min)": row.get("Time to Highway (min)", ""),
                 "Accessibility": 1,
-                "Catchment Population": catchment_pop,
-                "Catchment Unemployed": catchment_unemployed,
-                "Catchment Active Population": catchment_active
+                "NUTS3 Code": nuts3_code
             })
         
-        # Reference location
+        # Reference location (renamed to "Outbound", Accessibility: 0)
         if ref_name:
             ref_dist_col = f"Distance to {ref_name} (km)"
             ref_time_col = f"Time to {ref_name} (min)"
@@ -240,16 +226,14 @@ def create_site_selection_format(df_results: pd.DataFrame, ref_name: str = None,
                     "LatitudeY": lat,
                     "LongitudeX": lon,
                     "Destination": ref_name,
-                    "Destination group": "Reference Location",
+                    "Destination group": "Outbound",
                     "Distance (km)": row.get(ref_dist_col, ""),
                     "Time (min)": row.get(ref_time_col, ""),
                     "Accessibility": 0,
-                    "Catchment Population": catchment_pop,
-                    "Catchment Unemployed": catchment_unemployed,
-                    "Catchment Active Population": catchment_active
+                    "NUTS3 Code": nuts3_code
                 })
         
-        # Nearest city (100k+)
+        # Nearest city (100k+) (Accessibility: 1)
         if pd.notna(row.get("Nearest City (100k+)")):
             long_format_rows.append({
                 "Project ID": project_id,
@@ -259,13 +243,11 @@ def create_site_selection_format(df_results: pd.DataFrame, ref_name: str = None,
                 "LatitudeY": lat,
                 "LongitudeX": lon,
                 "Destination": row.get("Nearest City (100k+)", ""),
-                "Destination group": "Nearest City (100k+)",
+                "Destination group": "Nearest City",
                 "Distance (km)": row.get("Distance to City (km)", ""),
                 "Time (min)": row.get("Time to City (min)", ""),
-                "Accessibility": 4,
-                "Catchment Population": catchment_pop,
-                "Catchment Unemployed": catchment_unemployed,
-                "Catchment Active Population": catchment_active
+                "Accessibility": 1,
+                "NUTS3 Code": nuts3_code
             })
     
     return pd.DataFrame(long_format_rows)
@@ -1030,6 +1012,7 @@ def process_batch(
         
         # Add nearest city (100k+) fields
         out_rec["Nearest City (100k+)"] = None
+        out_rec["City Population"] = None
         out_rec["Distance to City (km)"] = None
         out_rec["Time to City (min)"] = None
         
@@ -1124,15 +1107,19 @@ def process_batch(
                     city_info = get_nearest_city(slat, slon, max_distance=200)
                     if city_info:
                         out_rec["Nearest City (100k+)"] = city_info.get("name")
+                        out_rec["City Population"] = city_info.get("pop")
                         # Calculate route distance to city
                         if api_calls and pause_every and api_calls % pause_every == 0:
                             if progress_hook:
                                 progress_hook(f"Pausing {pause_secs}s...")
                             time.sleep(pause_secs)
-                        dist_km, dur_min = get_route(site_origin, (city_info.get("lat"), city_info.get("lon")), route_cache=route_cache)
+                        city_lat = city_info.get("lat")
+                        city_lon = city_info.get("lon")
+                        dist_km, dur_min = get_route(site_origin, (city_lat, city_lon), route_cache=route_cache)
                         api_calls += 1
                         out_rec["Distance to City (km)"] = round(dist_km, 1)
                         out_rec["Time to City (min)"] = round(dur_min, 1)
+                        log_rec["steps"].append({"msg": f"Nearest city: {city_info.get('name')} ({city_info.get('pop'):,} pop), {dist_km:.1f} km away"})
                 except Exception as e:
                     log_rec["steps"].append({"error": f"Nearest City: {e}"})
             
