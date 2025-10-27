@@ -464,13 +464,14 @@ def find_nearest_highway_access(lat: float, lon: float, radius_km: float = 50) -
             if not data.get('elements'):
                 continue
             
-            # Process elements
+            # Process elements - find closest in THIS query
             for element in data.get('elements', []):
                 if element['type'] == 'node' and 'lat' in element and 'lon' in element:
                     node_lat = element['lat']
                     node_lon = element['lon']
                     dist = haversine_km(lat, lon, node_lat, node_lon)
                     
+                    # Track the closest across ALL strategies
                     if dist < min_dist:
                         min_dist = dist
                         nearest = {
@@ -480,12 +481,11 @@ def find_nearest_highway_access(lat: float, lon: float, radius_km: float = 50) -
                             'name': element.get('tags', {}).get('name', ''),
                             'ref': element.get('tags', {}).get('ref', ''),
                             'highway_type': element.get('tags', {}).get('highway', 'junction'),
-                            'id': element.get('id')
+                            'id': element.get('id'),
+                            'strategy': query_idx + 1
                         }
             
-            # If found something, return it
-            if nearest:
-                return nearest
+            # Continue to next strategy - don't return yet!
                 
         except requests.exceptions.Timeout:
             continue
