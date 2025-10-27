@@ -402,97 +402,134 @@ def nuts3_lookup(lat: float, lon: float) -> Dict[str, Any]:
 @st.cache_data(show_spinner=False, ttl=3600)
 def find_nearest_highway_access(lat: float, lon: float, radius_km: float = 50) -> Dict[str, Any]:
     """Find nearest highway/expressway access point using Overpass API"""
-    overpass_query = f"""
-    [out:json][timeout:25];
-    (
-      node["highway"="motorway_junction"](around:{radius_km * 1000},{lat},{lon});
-      way["highway"~"motorway_link|trunk_link"](around:{radius_km * 1000},{lat},{lon});
-      node(w);
-    );
-    out body;
-    >;
-    out skel qt;
-    """
     
-    try:
-        response = requests.post(
-            OVERPASS_URL,
-            data=overpass_query,
-            headers={'Content-Type': 'application/x-www-form-urlencoded'},
-            timeout=30
-        )
-        response.raise_for_status()
-        data = response.json()
+    # Try multiple query strategies
+    queries = [
+        # Strategy 1: Motorway junctions (most specific)
+        f"""
+        [out:json][timeout:30];
+        (
+          node["highway"="motorway_junction"](around:{radius_km * 1000},{lat},{lon});
+        );
+        out body;
+        """,
         
-        if not data.get('elements'):
-            # Fallback to major roads
-            fallback_query = f"""
-            [out:json][timeout:25];
-            (
-              way["highway"~"primary|trunk"](around:{radius_km * 1000},{lat},{lon});
-              node(w);
-            );
-            out body;
-            >;
-            out skel qt;
-            """
-            response = requests.post(OVERPASS_URL, data=fallback_query, 
-                                    headers={'Content-Type': 'application/x-www-form-urlencoded'}, timeout=30)
-            response.raise_for_status()
-            data = response.json()
+        # Strategy 2: Motorway and trunk links
+        f"""
+        [out:json][timeout:30];
+        (
+          way["highway"~"motorway_link|trunk_link|motorway|trunk"](around:{radius_km * 1000},{lat},{lon});
+          node(w);
+        );
+        out body;
+        """,
         
-        min_dist = float('inf')
-        nearest = None
+        # Strategy 3: Primary roads (major roads)
+        f"""
+        [out:json][timeout:30];
+        (
+          way["highway"~"primary|secondary"](around:{radius_km * 1000},{lat},{lon});
+          node(w);
+        );
+        out body;
+        """,
         
-        for element in data.get('elements', []):
-            if element['type'] == 'node' and 'lat' in element and 'lon' in element:
-                node_lat = element['lat']
-                node_lon = element['lon']
-                dist = haversine_km(lat, lon, node_lat, node_lon)
+        # Strategy 4: Any highway access
+        f"""
+        [out:json][timeout:30];
+        (
+          node["highway"~"motorway|trunk|primary"](around:{radius_km * 1000},{lat},{lon});
+        );
+        out body;
+        """
+    ]
+    
+    min_dist = float('inf')
+    nearest = None
+    
+    for query_idx, query in enumerate(queries):
+        try:
+            response = requests.post(
+                OVERPASS_URL,
+                data=query,
+                headers={'Content-Type': 'application/x-www-form-urlencoded'},
+                timeout=30
+            )
+            
+            if response.status_code != 200:
+                continue
                 
-                if dist < min_dist:
-                    min_dist = dist
-                    nearest = {
-                        'lat': node_lat,
-                        'lon': node_lon,
-                        'distance_straight_km': round(dist, 2),
-                        'name': element.get('tags', {}).get('name', ''),
-                        'ref': element.get('tags', {}).get('ref', ''),
-                        'highway_type': element.get('tags', {}).get('highway', 'junction'),
-                        'id': element.get('id')
-                    }
-        
-        return nearest if nearest else {}
-    except:
-        return {}
+            data = response.json()
+            
+            if not data.get('elements'):
+                continue
+            
+            # Process elements
+            for element in data.get('elements', []):
+                if element['type'] == 'node' and 'lat' in element and 'lon' in element:
+                    node_lat = element['lat']
+                    node_lon = element['lon']
+                    dist = haversine_km(lat, lon, node_lat, node_lon)
+                    
+                    if dist < min_dist:
+                        min_dist = dist
+                        nearest = {
+                            'lat': node_lat,
+                            'lon': node_lon,
+                            'distance_straight_km': round(dist, 2),
+                            'name': element.get('tags', {}).get('name', ''),
+                            'ref': element.get('tags', {}).get('ref', ''),
+                            'highway_type': element.get('tags', {}).get('highway', 'junction'),
+                            'id': element.get('id')
+                        }
+            
+            # If found something, return it
+            if nearest:
+                return nearest
+                
+        except requests.exceptions.Timeout:
+            continue
+        except requests.exceptions.RequestException:
+            continue
+        except Exception:
+            continue
+    
+    return nearest if nearest else {}
 
-def get_highway_distance(site_lat: float, site_lon: float, route_cache: Dict = None) -> Tuple[Optional[float], Optional[float], Optional[str]]:
+def get_highway_distance(site_lat: float, site_lon: float, route_cache: Dict = None, progress_hook=None) -> Tuple[Optional[float], Optional[float], Optional[str]]:
     """Calculate road distance to nearest highway/expressway access"""
     if route_cache is None:
         route_cache = {}
     
-    highway_access = find_nearest_highway_access(site_lat, site_lon)
-    
-    if not highway_access:
-        return None, None, None
-    
     try:
-        origin = (site_lat, site_lon)
-        dest = (highway_access['lat'], highway_access['lon'])
+        highway_access = find_nearest_highway_access(site_lat, site_lon, radius_km=50)
         
-        dist_km, dur_min = get_route(origin, dest, route_cache=route_cache)
+        if not highway_access or not highway_access.get('lat'):
+            return None, None, None
         
-        access_name = ""
-        if highway_access.get('name'):
-            access_name = highway_access['name']
-        elif highway_access.get('ref'):
-            access_name = f"Junction {highway_access['ref']}"
-        else:
-            access_name = f"Highway Access ({highway_access['highway_type']})"
-        
-        return dist_km, dur_min, access_name
-    except:
-        return highway_access.get('distance_straight_km'), None, "Highway Access"
+        try:
+            origin = (site_lat, site_lon)
+            dest = (float(highway_access['lat']), float(highway_access['lon']))
+            
+            dist_km, dur_min = get_route(origin, dest, route_cache=route_cache)
+            
+            access_name = ""
+            if highway_access.get('name'):
+                access_name = highway_access['name']
+            elif highway_access.get('ref'):
+                access_name = f"Highway {highway_access['ref']}"
+            else:
+                access_name = "Highway Access (junction)"
+            
+            return dist_km, dur_min, access_name
+        except Exception as route_err:
+            # If routing fails, use straight-line distance as fallback
+            straight_dist = highway_access.get('distance_straight_km')
+            if straight_dist:
+                return straight_dist, None, "Highway Access"
+            return None, None, None
+    except Exception as e:
+        return None, None, None
 
 # ---------------------- Eurostat API Integration ----------------------
 @st.cache_data(show_spinner=False, ttl=86400)
@@ -1084,16 +1121,19 @@ def process_batch(
                             progress_hook(f"Pausing {pause_secs}s...")
                         time.sleep(pause_secs)
                     
-                    highway_dist, highway_time, highway_name = get_highway_distance(slat, slon, route_cache=route_cache)
+                    highway_dist, highway_time, highway_name = get_highway_distance(slat, slon, route_cache=route_cache, progress_hook=progress_hook)
                     api_calls += 1
                     
-                    if highway_dist is not None:
+                    if highway_dist is not None and highway_name:
                         out_rec["Nearest Highway Access"] = highway_name
                         out_rec["Distance to Highway (km)"] = round(highway_dist, 1)
                         if highway_time is not None:
                             out_rec["Time to Highway (min)"] = round(highway_time, 1)
+                        log_rec["steps"].append({"msg": f"Highway: {highway_name}, {highway_dist:.1f} km away"})
+                    else:
+                        log_rec["steps"].append({"msg": "No highway access found within 50km"})
                 except Exception as e:
-                    log_rec["steps"].append({"error": f"Highway: {e}"})
+                    log_rec["steps"].append({"error": f"Highway calculation: {str(e)}"})
             
             # Reference distance
             if include_ref:
