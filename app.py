@@ -255,7 +255,8 @@ def create_site_selection_format(df_results: pd.DataFrame, ref_name: str = None,
                 "Distance (km)": row.get("Distance to City (km)", ""),
                 "Time (min)": row.get("Time to City (min)", ""),
                 "Accessibility": 1,
-                "NUTS3 Code": nuts3_code
+                "NUTS3 Code": nuts3_code,
+                "City Population": row.get("City Population", "")
             })
     
     return pd.DataFrame(long_format_rows)
