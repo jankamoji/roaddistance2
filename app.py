@@ -79,10 +79,18 @@ NOMINATIM_SEARCH = "https://nominatim.openstreetmap.org/search"
 OSRM_URL = "https://router.project-osrm.org/route/v1/driving/{lon1},{lat1};{lon2},{lat2}?overview=false&annotations=duration,distance"
 
 # ---------------------- Load EU Cities Database ----------------------
+import os
+import sys
+
+# Ensure we can find eu_cities_db.py in the same directory
+_app_dir = os.path.dirname(os.path.abspath(__file__))
+if _app_dir not in sys.path:
+    sys.path.insert(0, _app_dir)
+
 try:
     from eu_cities_db import EU_CITIES_DB, get_nearest_city
     _HAS_CITIES_DB = True
-except ImportError:
+except ImportError as import_err:
     _HAS_CITIES_DB = False
     EU_CITIES_DB = {}
     def get_nearest_city(lat, lon, max_distance=200):
@@ -1105,23 +1113,37 @@ def process_batch(
             if _HAS_CITIES_DB:
                 try:
                     city_info = get_nearest_city(slat, slon, max_distance=200)
-                    if city_info:
-                        out_rec["Nearest City (100k+)"] = city_info.get("name")
-                        out_rec["City Population"] = city_info.get("pop")
-                        # Calculate route distance to city
-                        if api_calls and pause_every and api_calls % pause_every == 0:
-                            if progress_hook:
-                                progress_hook(f"Pausing {pause_secs}s...")
-                            time.sleep(pause_secs)
-                        city_lat = city_info.get("lat")
-                        city_lon = city_info.get("lon")
-                        dist_km, dur_min = get_route(site_origin, (city_lat, city_lon), route_cache=route_cache)
-                        api_calls += 1
-                        out_rec["Distance to City (km)"] = round(dist_km, 1)
-                        out_rec["Time to City (min)"] = round(dur_min, 1)
-                        log_rec["steps"].append({"msg": f"Nearest city: {city_info.get('name')} ({city_info.get('pop'):,} pop), {dist_km:.1f} km away"})
+                    if city_info is not None and city_info.get("name"):
+                        city_name = city_info.get("name")
+                        city_pop = city_info.get("pop", 0)
+                        city_lat = float(city_info.get("lat"))
+                        city_lon = float(city_info.get("lon"))
+                        
+                        out_rec["Nearest City (100k+)"] = city_name
+                        out_rec["City Population"] = int(city_pop) if city_pop else None
+                        
+                        try:
+                            # Calculate route distance to city
+                            if api_calls and pause_every and api_calls % pause_every == 0:
+                                if progress_hook:
+                                    progress_hook(f"Pausing {pause_secs}s...")
+                                time.sleep(pause_secs)
+                            
+                            dist_km, dur_min = get_route(site_origin, (city_lat, city_lon), route_cache=route_cache)
+                            api_calls += 1
+                            
+                            out_rec["Distance to City (km)"] = round(dist_km, 1)
+                            out_rec["Time to City (min)"] = round(dur_min, 1)
+                            
+                            # Format log message safely
+                            pop_str = f"{int(city_pop):,}" if city_pop else "unknown"
+                            log_rec["steps"].append({"msg": f"Nearest city: {city_name} ({pop_str} pop), {dist_km:.1f} km, {dur_min:.0f} min"})
+                        except Exception as route_err:
+                            log_rec["steps"].append({"error": f"Route to {city_name}: {str(route_err)}"})
+                    else:
+                        log_rec["steps"].append({"msg": "No nearby city found within 200km"})
                 except Exception as e:
-                    log_rec["steps"].append({"error": f"Nearest City: {e}"})
+                    log_rec["steps"].append({"error": f"Nearest City lookup: {str(e)}"})
             
             # NUTS enrichment
             if _HAS_SHAPELY:
