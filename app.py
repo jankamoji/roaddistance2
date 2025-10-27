@@ -2,11 +2,13 @@
 # Complete version with all features integrated
 # Features:
 # - Sites/Airports/Seaports distance calculations with Top-N prefilter
+# - Nearest City (100k+ population) distance calculations
 # - Highway/expressway distance calculations
 # - Eurostat population and unemployment catchment areas
 # - NUTS2/NUTS3 enrichment (fixed)
 # - Project ID and Site ID support
-# - Site Selection Tool export format
+# - Site Selection Tool export format (improved)
+# - Reference location labeled as "Outbound"
 # - Enhanced map visualization with fullscreen
 # - National admin boundaries (PL + custom URL loader)
 
@@ -78,6 +80,281 @@ NOMINATIM_SEARCH = "https://nominatim.openstreetmap.org/search"
 # OSRM routing
 OSRM_URL = "https://router.project-osrm.org/route/v1/driving/{lon1},{lat1};{lon2},{lat2}?overview=false&annotations=duration,distance"
 
+# ---------------------- City database (100k+ population) - All 27 EU Member States ----------------------
+MAJOR_CITIES_DB = {
+    "DE": [
+        {"name": "Berlin", "lat": 52.520008, "lon": 13.404954, "pop": 3644826},
+        {"name": "Munich", "lat": 48.135125, "lon": 11.581981, "pop": 1484541},
+        {"name": "Frankfurt", "lat": 50.110924, "lon": 8.682127, "pop": 746878},
+        {"name": "Hamburg", "lat": 53.550341, "lon": 10.000654, "pop": 1852405},
+        {"name": "Cologne", "lat": 50.938361, "lon": 6.959974, "pop": 1097286},
+        {"name": "Stuttgart", "lat": 48.775419, "lon": 9.182440, "pop": 623738},
+        {"name": "Düsseldorf", "lat": 51.227144, "lon": 6.773602, "pop": 623738},
+        {"name": "Dortmund", "lat": 51.514008, "lon": 7.465298, "pop": 587181},
+        {"name": "Essen", "lat": 51.454513, "lon": 7.013345, "pop": 581760},
+        {"name": "Leipzig", "lat": 51.339695, "lon": 12.373075, "pop": 608322},
+        {"name": "Bremen", "lat": 53.074722, "lon": 8.237500, "pop": 563798},
+        {"name": "Dresden", "lat": 51.050409, "lon": 13.737262, "pop": 555351},
+        {"name": "Hanover", "lat": 52.375892, "lon": 9.735603, "pop": 543669},
+        {"name": "Nuremberg", "lat": 49.451993, "lon": 11.076745, "pop": 518365},
+        {"name": "Duisburg", "lat": 51.434344, "lon": 6.762779, "pop": 500602},
+        {"name": "Bochum", "lat": 51.476086, "lon": 7.225381, "pop": 364760},
+        {"name": "Wuppertal", "lat": 51.265430, "lon": 7.184368, "pop": 353798},
+        {"name": "Gelsenkirchen", "lat": 51.497916, "lon": 7.095960, "pop": 257620},
+        {"name": "Mönchengladbach", "lat": 51.156891, "lon": 6.396752, "pop": 256639},
+        {"name": "Aachen", "lat": 50.776351, "lon": 6.083887, "pop": 265130},
+        {"name": "Kiel", "lat": 54.323181, "lon": 10.131850, "pop": 247744},
+        {"name": "Magdeburg", "lat": 52.131028, "lon": 11.629182, "pop": 238679},
+        {"name": "Oberhausen", "lat": 51.465148, "lon": 6.858169, "pop": 210751},
+        {"name": "Mannheim", "lat": 49.487613, "lon": 8.466038, "pop": 309370},
+        {"name": "Karlsruhe", "lat": 49.006890, "lon": 8.387592, "pop": 308436},
+        {"name": "Augsburg", "lat": 48.372114, "lon": 10.898268, "pop": 301143},
+        {"name": "Wiesbaden", "lat": 50.082951, "lon": 8.240438, "pop": 287248},
+        {"name": "Mülheim", "lat": 51.414219, "lon": 6.885137, "pop": 180620},
+        {"name": "Recklinghausen", "lat": 51.610776, "lon": 7.197792, "pop": 109722},
+        {"name": "Remscheid", "lat": 51.184545, "lon": 7.198220, "pop": 110040},
+    ],
+    "PL": [
+        {"name": "Warsaw", "lat": 52.229676, "lon": 21.012229, "pop": 1863564},
+        {"name": "Krakow", "lat": 50.049683, "lon": 19.944544, "pop": 804237},
+        {"name": "Łódź", "lat": 51.779233, "lon": 19.447232, "pop": 672914},
+        {"name": "Wrocław", "lat": 51.110093, "lon": 17.038632, "pop": 637075},
+        {"name": "Poznań", "lat": 52.406374, "lon": 16.931992, "pop": 535830},
+        {"name": "Gdańsk", "lat": 54.372158, "lon": 18.638453, "pop": 461865},
+        {"name": "Szczecin", "lat": 53.429889, "lon": 14.552894, "pop": 395105},
+        {"name": "Bydgoszcz", "lat": 53.123480, "lon": 18.007880, "pop": 355735},
+        {"name": "Lublin", "lat": 51.246595, "lon": 22.566471, "pop": 336779},
+        {"name": "Katowice", "lat": 50.264892, "lon": 19.023854, "pop": 299170},
+        {"name": "Białystok", "lat": 53.132466, "lon": 23.168826, "pop": 295012},
+        {"name": "Gdynia", "lat": 54.488170, "lon": 18.633274, "pop": 246316},
+        {"name": "Częstochowa", "lat": 50.812328, "lon": 19.120853, "pop": 215815},
+        {"name": "Radom", "lat": 51.402656, "lon": 21.143419, "pop": 209962},
+        {"name": "Zabrze", "lat": 50.313156, "lon": 18.775308, "pop": 170784},
+    ],
+    "FR": [
+        {"name": "Paris", "lat": 48.856613, "lon": 2.352222, "pop": 2161000},
+        {"name": "Marseille", "lat": 43.296387, "lon": 5.369780, "pop": 869815},
+        {"name": "Lyon", "lat": 45.764043, "lon": 4.835659, "pop": 516092},
+        {"name": "Toulouse", "lat": 43.604652, "lon": 1.444209, "pop": 479553},
+        {"name": "Nice", "lat": 43.710173, "lon": 7.261953, "pop": 340017},
+        {"name": "Nantes", "lat": 47.218371, "lon": -1.553621, "pop": 309346},
+        {"name": "Strasbourg", "lat": 48.573405, "lon": 7.752111, "pop": 285121},
+        {"name": "Montpellier", "lat": 43.610769, "lon": 3.876716, "pop": 285121},
+        {"name": "Bordeaux", "lat": 44.841225, "lon": -0.580036, "pop": 261576},
+        {"name": "Lille", "lat": 50.629250, "lon": 3.057256, "pop": 232566},
+        {"name": "Rennes", "lat": 48.111148, "lon": -1.680198, "pop": 220050},
+        {"name": "Reims", "lat": 49.258329, "lon": 4.031696, "pop": 180759},
+        {"name": "Havre", "lat": 49.494369, "lon": 0.107883, "pop": 170098},
+        {"name": "Rouen", "lat": 49.440258, "lon": 1.099369, "pop": 111557},
+        {"name": "Toulon", "lat": 43.124228, "lon": 5.928139, "pop": 174697},
+    ],
+    "IT": [
+        {"name": "Rome", "lat": 41.902782, "lon": 12.496366, "pop": 2760000},
+        {"name": "Milan", "lat": 45.465642, "lon": 9.185924, "pop": 1399000},
+        {"name": "Naples", "lat": 40.852054, "lon": 14.268619, "pop": 910448},
+        {"name": "Turin", "lat": 45.070312, "lon": 7.686856, "pop": 870456},
+        {"name": "Palermo", "lat": 38.115556, "lon": 13.361389, "pop": 657224},
+        {"name": "Genoa", "lat": 44.405648, "lon": 8.946256, "pop": 610307},
+        {"name": "Bologna", "lat": 44.494887, "lon": 11.342616, "pop": 394321},
+        {"name": "Florence", "lat": 43.769562, "lon": 11.255814, "pop": 382258},
+        {"name": "Bari", "lat": 41.117268, "lon": 16.871871, "pop": 320823},
+        {"name": "Catania", "lat": 37.502669, "lon": 15.087269, "pop": 307276},
+        {"name": "Venice", "lat": 45.440847, "lon": 12.315515, "pop": 260520},
+        {"name": "Messina", "lat": 38.192592, "lon": 15.556389, "pop": 238997},
+        {"name": "Verona", "lat": 45.438889, "lon": 10.993333, "pop": 258034},
+        {"name": "Padua", "lat": 45.406408, "lon": 11.876761, "pop": 211959},
+        {"name": "Como", "lat": 45.808059, "lon": 9.085176, "pop": 84876},
+    ],
+    "ES": [
+        {"name": "Madrid", "lat": 40.416775, "lon": -3.703790, "pop": 3266000},
+        {"name": "Barcelona", "lat": 41.385064, "lon": 2.173403, "pop": 1620000},
+        {"name": "Valencia", "lat": 39.469907, "lon": -0.376288, "pop": 791413},
+        {"name": "Seville", "lat": 37.389092, "lon": -5.984459, "pop": 688711},
+        {"name": "Zaragoza", "lat": 41.648823, "lon": -0.889085, "pop": 666880},
+        {"name": "Málaga", "lat": 36.721261, "lon": -4.421266, "pop": 574654},
+        {"name": "Murcia", "lat": 37.983810, "lon": -1.129730, "pop": 453258},
+        {"name": "Palma", "lat": 39.569390, "lon": 2.650170, "pop": 416065},
+        {"name": "Bilbao", "lat": 43.262985, "lon": -2.935013, "pop": 345821},
+        {"name": "Alicante", "lat": 38.345996, "lon": -0.490686, "pop": 334887},
+        {"name": "Córdoba", "lat": 37.888175, "lon": -4.779383, "pop": 325708},
+        {"name": "Valladolid", "lat": 41.652251, "lon": -4.724532, "pop": 298412},
+        {"name": "Vigo", "lat": 42.240599, "lon": -8.720727, "pop": 295364},
+        {"name": "Gijón", "lat": 43.545261, "lon": -5.661926, "pop": 271780},
+        {"name": "Granada", "lat": 37.177336, "lon": -3.598557, "pop": 232208},
+    ],
+    "NL": [
+        {"name": "Amsterdam", "lat": 52.370216, "lon": 4.895168, "pop": 872680},
+        {"name": "Rotterdam", "lat": 51.924420, "lon": 4.477733, "pop": 651446},
+        {"name": "The Hague", "lat": 52.070498, "lon": 4.300700, "pop": 545163},
+        {"name": "Utrecht", "lat": 52.090737, "lon": 5.121420, "pop": 357694},
+        {"name": "Eindhoven", "lat": 51.441642, "lon": 5.469722, "pop": 234235},
+        {"name": "Groningen", "lat": 53.219383, "lon": 6.566502, "pop": 232874},
+        {"name": "Tilburg", "lat": 51.555510, "lon": 5.091470, "pop": 219800},
+        {"name": "Breda", "lat": 51.587100, "lon": 4.776000, "pop": 183873},
+        {"name": "Nijmegen", "lat": 51.842520, "lon": 5.854550, "pop": 176731},
+        {"name": "Apeldoorn", "lat": 52.211157, "lon": 5.969923, "pop": 163818},
+        {"name": "Haarlem", "lat": 52.381169, "lon": 4.637070, "pop": 161265},
+        {"name": "Arnhem", "lat": 51.985103, "lon": 5.898730, "pop": 159265},
+    ],
+    "BE": [
+        {"name": "Brussels", "lat": 50.850340, "lon": 4.351710, "pop": 1212352},
+        {"name": "Antwerp", "lat": 51.219448, "lon": 4.402464, "pop": 523248},
+        {"name": "Ghent", "lat": 51.054342, "lon": 3.717424, "pop": 262219},
+        {"name": "Charleroi", "lat": 50.411034, "lon": 4.444432, "pop": 201593},
+        {"name": "Liège", "lat": 50.632557, "lon": 5.579666, "pop": 197355},
+        {"name": "Bruges", "lat": 51.209348, "lon": 3.224700, "pop": 118284},
+        {"name": "Namur", "lat": 50.465328, "lon": 4.867665, "pop": 110939},
+        {"name": "Leuven", "lat": 50.881365, "lon": 4.716537, "pop": 101396},
+    ],
+    "AT": [
+        {"name": "Vienna", "lat": 48.208174, "lon": 16.373819, "pop": 1897000},
+        {"name": "Graz", "lat": 47.070714, "lon": 15.439504, "pop": 288806},
+        {"name": "Linz", "lat": 48.306940, "lon": 14.285830, "pop": 204846},
+        {"name": "Salzburg", "lat": 47.809490, "lon": 13.055010, "pop": 155021},
+        {"name": "Innsbruck", "lat": 47.269212, "lon": 11.404102, "pop": 132110},
+        {"name": "Klagenfurt", "lat": 46.622220, "lon": 14.305280, "pop": 101303},
+    ],
+    "CZ": [
+        {"name": "Prague", "lat": 50.075538, "lon": 14.437800, "pop": 1309000},
+        {"name": "Brno", "lat": 49.195061, "lon": 16.606836, "pop": 372578},
+        {"name": "Ostrava", "lat": 49.833880, "lon": 18.283880, "pop": 290553},
+        {"name": "Plzeň", "lat": 49.738411, "lon": 13.378116, "pop": 173659},
+        {"name": "Liberec", "lat": 50.763056, "lon": 15.056389, "pop": 104266},
+    ],
+    "HU": [
+        {"name": "Budapest", "lat": 47.497912, "lon": 19.040235, "pop": 1752286},
+        {"name": "Debrecen", "lat": 47.530556, "lon": 21.630556, "pop": 200341},
+        {"name": "Szeged", "lat": 46.252778, "lon": 20.141667, "pop": 160348},
+        {"name": "Miskolc", "lat": 48.103519, "lon": 20.776111, "pop": 153000},
+        {"name": "Pécs", "lat": 46.073056, "lon": 18.232222, "pop": 140234},
+    ],
+    "RO": [
+        {"name": "Bucharest", "lat": 44.426767, "lon": 26.102538, "pop": 1830169},
+        {"name": "Cluj-Napoca", "lat": 46.768585, "lon": 23.590415, "pop": 411379},
+        {"name": "Timişoara", "lat": 45.755814, "lon": 21.230015, "pop": 319279},
+        {"name": "Iaşi", "lat": 47.158889, "lon": 27.586389, "pop": 288121},
+        {"name": "Constanța", "lat": 44.176111, "lon": 28.665278, "pop": 283872},
+        {"name": "Craiova", "lat": 44.330329, "lon": 23.805522, "pop": 269506},
+        {"name": "Braşov", "lat": 45.641053, "lon": 25.628441, "pop": 266199},
+        {"name": "Ploiești", "lat": 44.948889, "lon": 25.582500, "pop": 223369},
+    ],
+    # Greece (GR)
+    "GR": [
+        {"name": "Athens", "lat": 37.983810, "lon": 23.727539, "pop": 3154001},
+        {"name": "Thessaloniki", "lat": 40.640672, "lon": 22.927754, "pop": 325182},
+        {"name": "Patras", "lat": 38.246453, "lon": 21.734402, "pop": 168099},
+        {"name": "Heraklion", "lat": 35.338692, "lon": 25.131606, "pop": 173993},
+    ],
+    # Portugal (PT)
+    "PT": [
+        {"name": "Lisbon", "lat": 38.722252, "lon": -9.139337, "pop": 505526},
+        {"name": "Porto", "lat": 41.157944, "lon": -8.629105, "pop": 1688816},
+        {"name": "Braga", "lat": 41.565250, "lon": -8.429870, "pop": 195938},
+        {"name": "Covilhã", "lat": 40.284850, "lon": -7.498690, "pop": 117505},
+    ],
+    # Sweden (SE)
+    "SE": [
+        {"name": "Stockholm", "lat": 59.329444, "lon": 18.068611, "pop": 975551},
+        {"name": "Gothenburg", "lat": 57.708870, "lon": 11.974560, "pop": 644799},
+        {"name": "Malmö", "lat": 55.604981, "lon": 12.994850, "pop": 347949},
+        {"name": "Uppsala", "lat": 59.861405, "lon": 17.640148, "pop": 230767},
+        {"name": "Västerås", "lat": 59.609869, "lon": 16.539127, "pop": 127948},
+        {"name": "Örebro", "lat": 59.271088, "lon": 15.207284, "pop": 130676},
+        {"name": "Linköping", "lat": 58.410417, "lon": 15.619667, "pop": 102945},
+    ],
+    # Finland (FI)
+    "FI": [
+        {"name": "Helsinki", "lat": 60.169856, "lon": 24.938379, "pop": 656873},
+        {"name": "Espoo", "lat": 60.205252, "lon": 24.655899, "pop": 288975},
+        {"name": "Tampere", "lat": 61.494912, "lon": 23.760701, "pop": 239316},
+        {"name": "Vantaa", "lat": 60.294167, "lon": 25.037222, "pop": 233257},
+        {"name": "Turku", "lat": 60.452788, "lon": 22.266626, "pop": 190667},
+        {"name": "Oulu", "lat": 65.012662, "lon": 25.475171, "pop": 156214},
+        {"name": "Kuopio", "lat": 62.891111, "lon": 27.678333, "pop": 123372},
+        {"name": "Jyväskylä", "lat": 62.242531, "lon": 25.748151, "pop": 143341},
+    ],
+    # Denmark (DK)
+    "DK": [
+        {"name": "Copenhagen", "lat": 55.676111, "lon": 12.568333, "pop": 1349000},
+        {"name": "Aarhus", "lat": 56.156667, "lon": 10.200000, "pop": 349983},
+        {"name": "Odense", "lat": 55.403333, "lon": 10.388889, "pop": 175245},
+        {"name": "Aalborg", "lat": 57.047857, "lon": 9.921682, "pop": 131916},
+        {"name": "Randers", "lat": 56.461667, "lon": 10.316667, "pop": 101564},
+    ],
+    # Slovakia (SK)
+    "SK": [
+        {"name": "Bratislava", "lat": 48.148598, "lon": 17.107748, "pop": 475508},
+        {"name": "Košice", "lat": 48.718333, "lon": 21.260833, "pop": 236093},
+        {"name": "Prešov", "lat": 49.000000, "lon": 21.239167, "pop": 106648},
+        {"name": "Žilina", "lat": 49.224167, "lon": 18.740833, "pop": 109618},
+        {"name": "Banská Bystrica", "lat": 48.735833, "lon": 19.140278, "pop": 77229},
+    ],
+    # Slovenia (SI)
+    "SI": [
+        {"name": "Ljubljana", "lat": 46.056947, "lon": 14.505751, "pop": 295022},
+        {"name": "Maribor", "lat": 46.553329, "lon": 15.647834, "pop": 111385},
+        {"name": "Celje", "lat": 46.238889, "lon": 15.277222, "pop": 49323},
+    ],
+    # Croatia (HR)
+    "HR": [
+        {"name": "Zagreb", "lat": 45.815011, "lon": 15.982287, "pop": 769944},
+        {"name": "Split", "lat": 43.508137, "lon": 16.440808, "pop": 176314},
+        {"name": "Rijeka", "lat": 45.327063, "lon": 14.442176, "pop": 128735},
+        {"name": "Osijek", "lat": 45.551667, "lon": 18.713889, "pop": 108048},
+    ],
+    # Lithuania (LT)
+    "LT": [
+        {"name": "Vilnius", "lat": 54.687157, "lon": 25.279652, "pop": 588412},
+        {"name": "Kaunas", "lat": 54.901389, "lon": 23.904444, "pop": 324365},
+        {"name": "Klaipėda", "lat": 55.708889, "lon": 21.144722, "pop": 151177},
+        {"name": "Šiauliai", "lat": 55.933889, "lon": 23.728889, "pop": 104697},
+    ],
+    # Latvia (LV)
+    "LV": [
+        {"name": "Riga", "lat": 56.949649, "lon": 24.105186, "pop": 605802},
+        {"name": "Daugavpils", "lat": 55.873611, "lon": 26.532500, "pop": 102325},
+        {"name": "Liepāja", "lat": 56.515000, "lon": 21.015000, "pop": 76731},
+    ],
+    # Estonia (EE)
+    "EE": [
+        {"name": "Tallinn", "lat": 59.436961, "lon": 24.753575, "pop": 438203},
+        {"name": "Tartu", "lat": 58.378025, "lon": 26.728123, "pop": 140232},
+        {"name": "Narva", "lat": 59.378889, "lon": 28.187500, "pop": 58385},
+    ],
+    # Cyprus (CY)
+    "CY": [
+        {"name": "Nicosia", "lat": 35.126413, "lon": 33.382827, "pop": 310968},
+        {"name": "Limassol", "lat": 34.674882, "lon": 33.038252, "pop": 193100},
+        {"name": "Larnaca", "lat": 34.917671, "lon": 33.630033, "pop": 69920},
+    ],
+    # Luxembourg (LU)
+    "LU": [
+        {"name": "Luxembourg City", "lat": 49.611621, "lon": 6.129583, "pop": 128025},
+        {"name": "Esch-sur-Alzette", "lat": 49.493889, "lon": 5.978056, "pop": 100816},
+    ],
+    # Malta (MT)
+    "MT": [
+        {"name": "Valletta", "lat": 35.897656, "lon": 14.512516, "pop": 6000},
+        {"name": "Birkirkara", "lat": 35.871667, "lon": 14.402500, "pop": 121910},
+        {"name": "Mosta", "lat": 35.880556, "lon": 14.378889, "pop": 20107},
+    ],
+    # Bulgaria (BG)
+    "BG": [
+        {"name": "Sofia", "lat": 42.697708, "lon": 23.321868, "pop": 1241396},
+        {"name": "Plovdiv", "lat": 42.149833, "lon": 24.750680, "pop": 346893},
+        {"name": "Varna", "lat": 43.204808, "lon": 27.911856, "pop": 312770},
+        {"name": "Burgas", "lat": 42.504810, "lon": 27.471111, "pop": 210385},
+        {"name": "Ruse", "lat": 43.852222, "lon": 25.955000, "pop": 155049},
+    ],
+    # Ireland (IE)
+    "IE": [
+        {"name": "Dublin", "lat": 53.349805, "lon": -6.260310, "pop": 1256057},
+        {"name": "Cork", "lat": 51.897720, "lon": -8.470027, "pop": 208669},
+        {"name": "Galway", "lat": 53.271028, "lon": -9.050582, "pop": 179227},
+        {"name": "Limerick", "lat": 52.638889, "lon": -8.624444, "pop": 100396},
+    ],
+}
+
 # ---------------------- Utilities ----------------------
 def haversine_km(lat1, lon1, lat2, lon2):
     """Calculate distance between two points on Earth using Haversine formula"""
@@ -89,6 +366,41 @@ def haversine_km(lat1, lon1, lat2, lon2):
     a = np.sin(dphi/2.0)**2 + np.cos(phi1) * np.cos(phi2) * np.sin(dlambda/2.0)**2
     c = 2 * np.arctan2(np.sqrt(a), np.sqrt(1-a))
     return R * c
+
+def get_country_code(lat, lon) -> str:
+    """Get country code from coordinates using reverse geocoding"""
+    try:
+        params = {"lat": lat, "lon": lon, "format": "json"}
+        resp = requests.get(NOMINATIM_REVERSE, params=params, timeout=5)
+        if resp.status_code == 200:
+            data = resp.json()
+            addr = data.get("address", {})
+            code = addr.get("country_code", "").upper()
+            if code and code in MAJOR_CITIES_DB:
+                return code
+    except:
+        pass
+    # Fallback to default country
+    return "DE"
+
+def find_nearest_city(lat: float, lon: float, max_distance: float = 200) -> Optional[Dict]:
+    """Find nearest major city (100k+) within max_distance km"""
+    cc = get_country_code(lat, lon)
+    cities = MAJOR_CITIES_DB.get(cc, MAJOR_CITIES_DB.get("DE", []))
+    
+    if not cities:
+        return None
+    
+    nearest = None
+    nearest_dist = float('inf')
+    
+    for city in cities:
+        dist = haversine_km(lat, lon, city["lat"], city["lon"])
+        if dist < nearest_dist and dist <= max_distance:
+            nearest_dist = dist
+            nearest = (city["name"], dist)
+    
+    return nearest
 
 # ---------------------- Template files ----------------------
 @st.cache_data(show_spinner=False)
@@ -140,7 +452,7 @@ def template_files() -> Dict[str, bytes]:
 
 # ---------------------- Site Selection Tool Export Format ----------------------
 def create_site_selection_format(df_results: pd.DataFrame, ref_name: str = None, catchment_radius: int = 50) -> pd.DataFrame:
-    """Convert results to long format for Site Selection Tool"""
+    """Convert results to long format for Site Selection Tool with NUTS3 ID"""
     long_format_rows = []
     
     for _, row in df_results.iterrows():
@@ -150,6 +462,7 @@ def create_site_selection_format(df_results: pd.DataFrame, ref_name: str = None,
         site_name = row.get("Site Name", "")
         lat = row.get("Latitude", "")
         lon = row.get("Longitude", "")
+        nuts3_id = row.get("NUTS3 ID", "")
         
         # Extract catchment data if available
         pop_col = f"Catchment Population ({catchment_radius}km)"
@@ -160,7 +473,7 @@ def create_site_selection_format(df_results: pd.DataFrame, ref_name: str = None,
         catchment_unemployed = row.get(unemployed_col, "")
         catchment_active = row.get(active_col, "")
         
-        # Airport record
+        # 1. Nearest Airport record (Accessibility: 1)
         if pd.notna(row.get("Nearest Airport")):
             long_format_rows.append({
                 "Project ID": project_id,
@@ -174,12 +487,13 @@ def create_site_selection_format(df_results: pd.DataFrame, ref_name: str = None,
                 "Distance (km)": row.get("Distance to Airport (km)", ""),
                 "Time (min)": row.get("Time to Airport (min)", ""),
                 "Accessibility": 1,
+                "NUTS3 ID": nuts3_id,
                 "Catchment Population": catchment_pop,
                 "Catchment Unemployed": catchment_unemployed,
                 "Catchment Active Population": catchment_active
             })
         
-        # Seaport record
+        # 2. Inbound (Seaport) record
         if pd.notna(row.get("Nearest Seaport")):
             long_format_rows.append({
                 "Project ID": project_id,
@@ -189,17 +503,18 @@ def create_site_selection_format(df_results: pd.DataFrame, ref_name: str = None,
                 "LatitudeY": lat,
                 "LongitudeX": lon,
                 "Destination": row.get("Nearest Seaport", ""),
-                "Destination group": "Nearest Port",
+                "Destination group": "Inbound",
                 "Distance (km)": row.get("Distance to Seaport (km)", ""),
                 "Time (min)": row.get("Time to Seaport (min)", ""),
-                "Accessibility": 1,
+                "Accessibility": 2,
+                "NUTS3 ID": nuts3_id,
                 "Catchment Population": catchment_pop,
                 "Catchment Unemployed": catchment_unemployed,
                 "Catchment Active Population": catchment_active
             })
         
-        # Highway record
-        if pd.notna(row.get("Nearest Highway Access")):
+        # 3. Outbound (Reference location) record
+        if ref_name and pd.notna(row.get("Distance to Reference (km)")):
             long_format_rows.append({
                 "Project ID": project_id,
                 "Project Name": "",
@@ -207,1300 +522,447 @@ def create_site_selection_format(df_results: pd.DataFrame, ref_name: str = None,
                 "Site Name": site_name,
                 "LatitudeY": lat,
                 "LongitudeX": lon,
-                "Destination": row.get("Nearest Highway Access", ""),
-                "Destination group": "Nearest Highway",
-                "Distance (km)": row.get("Distance to Highway (km)", ""),
-                "Time (min)": row.get("Time to Highway (min)", ""),
-                "Accessibility": 1,
+                "Destination": ref_name,
+                "Destination group": "Outbound",
+                "Distance (km)": row.get("Distance to Reference (km)", ""),
+                "Time (min)": row.get("Time to Reference (min)", ""),
+                "Accessibility": 3,
+                "NUTS3 ID": nuts3_id,
                 "Catchment Population": catchment_pop,
                 "Catchment Unemployed": catchment_unemployed,
                 "Catchment Active Population": catchment_active
             })
         
-        # Reference location
-        if ref_name:
-            ref_dist_col = f"Distance to {ref_name} (km)"
-            ref_time_col = f"Time to {ref_name} (min)"
-            if ref_dist_col in row and pd.notna(row[ref_dist_col]):
-                long_format_rows.append({
-                    "Project ID": project_id,
-                    "Project Name": "",
-                    "Site ID": site_id,
-                    "Site Name": site_name,
-                    "LatitudeY": lat,
-                    "LongitudeX": lon,
-                    "Destination": ref_name,
-                    "Destination group": "Reference Location",
-                    "Distance (km)": row.get(ref_dist_col, ""),
-                    "Time (min)": row.get(ref_time_col, ""),
-                    "Accessibility": 0,
-                    "Catchment Population": catchment_pop,
-                    "Catchment Unemployed": catchment_unemployed,
-                    "Catchment Active Population": catchment_active
-                })
+        # 4. Nearest City (100k+) record
+        if pd.notna(row.get("Nearest City")):
+            long_format_rows.append({
+                "Project ID": project_id,
+                "Project Name": "",
+                "Site ID": site_id,
+                "Site Name": site_name,
+                "LatitudeY": lat,
+                "LongitudeX": lon,
+                "Destination": row.get("Nearest City", ""),
+                "Destination group": "Nearest City",
+                "Distance (km)": row.get("Distance to City (km)", ""),
+                "Time (min)": row.get("Time to City (min)", ""),
+                "Accessibility": 4,
+                "NUTS3 ID": nuts3_id,
+                "Catchment Population": catchment_pop,
+                "Catchment Unemployed": catchment_unemployed,
+                "Catchment Active Population": catchment_active
+            })
+        
+        # 5. Nearest Highway record
+        if pd.notna(row.get("Nearest Highway")):
+            long_format_rows.append({
+                "Project ID": project_id,
+                "Project Name": "",
+                "Site ID": site_id,
+                "Site Name": site_name,
+                "LatitudeY": lat,
+                "LongitudeX": lon,
+                "Destination": row.get("Nearest Highway", ""),
+                "Destination group": "Nearest Highway",
+                "Distance (km)": row.get("Distance to Highway (km)", ""),
+                "Time (min)": row.get("Time to Highway (min)", ""),
+                "Accessibility": 5,
+                "NUTS3 ID": nuts3_id,
+                "Catchment Population": catchment_pop,
+                "Catchment Unemployed": catchment_unemployed,
+                "Catchment Active Population": catchment_active
+            })
     
     return pd.DataFrame(long_format_rows)
 
-# ---------------------- NUTS Loading (Fixed) ----------------------
-@st.cache_resource(show_spinner=False)
-def _load_nuts_index(url: str) -> Dict[str, Any]:
-    """Load NUTS geometries and build spatial index"""
-    if not _HAS_SHAPELY:
-        return {"ok": False, "msg": "Shapely not installed", "tree": None, "geoms": [], "props": [], "count": 0}
-    
-    try:
-        # Download with retries
-        max_retries = 3
-        for attempt in range(max_retries):
-            try:
-                r = requests.get(url, timeout=120)
-                r.raise_for_status()
-                gj = r.json()
-                break
-            except requests.exceptions.Timeout:
-                if attempt == max_retries - 1:
-                    raise
-                time.sleep(2 ** attempt)
-        
-        geoms = []
-        props = []
-        
-        for feat in gj.get("features", []):
-            try:
-                geom_data = feat.get("geometry")
-                if not geom_data:
-                    continue
-                
-                g = shape(geom_data)
-                
-                # Repair invalid geometries
-                if not g.is_valid:
-                    try:
-                        g = make_valid(g)
-                    except:
-                        g = g.buffer(0)
-                
-                if g.is_empty:
-                    continue
-                
-                pr = feat.get("properties", {})
-                prop_dict = {
-                    "NUTS_ID": pr.get("NUTS_ID", ""),
-                    "NAME_LATN": pr.get("NAME_LATN", ""),
-                    "LEVL_CODE": pr.get("LEVL_CODE", ""),
-                    "CNTR_CODE": pr.get("CNTR_CODE", ""),
-                }
-                
-                geoms.append(g)
-                props.append(prop_dict)
-            except Exception:
-                continue
-        
-        if not geoms:
-            return {"ok": False, "msg": "No valid geometries found", "tree": None, "geoms": [], "props": [], "count": 0}
-        
-        tree = STRtree(geoms)
-        return {"ok": True, "msg": "Success", "tree": tree, "geoms": geoms, "props": props, "count": len(geoms)}
-        
-    except Exception as e:
-        return {"ok": False, "msg": str(e), "tree": None, "geoms": [], "props": [], "count": 0}
-
-@st.cache_resource(show_spinner=False)
-def load_nuts2_index() -> Dict[str, Any]:
-    return _load_nuts_index(NUTS2_URL)
-
-@st.cache_resource(show_spinner=False)
-def load_nuts3_index() -> Dict[str, Any]:
-    return _load_nuts_index(NUTS3_URL)
-
-def _nuts_lookup_generic(idx: Dict[str, Any], lat: float, lon: float) -> Dict[str, Any]:
-    """Improved NUTS point-in-polygon lookup"""
-    if not idx.get("ok") or not idx.get("tree"):
-        return {}
-    
-    try:
-        pt = Point(float(lon), float(lat))
-        
-        # Try direct query
-        candidates_indices = []
-        try:
-            candidates_indices = list(idx["tree"].query(pt, predicate="intersects"))
-        except TypeError:
-            candidates = idx["tree"].query(pt)
-            if hasattr(candidates, '__iter__'):
-                for cand in candidates:
-                    for i, geom in enumerate(idx["geoms"]):
-                        if cand is geom or (hasattr(cand, 'equals') and cand.equals(geom)):
-                            candidates_indices.append(i)
-                            break
-        except:
-            pass
-        
-        for idx_num in candidates_indices:
-            if 0 <= idx_num < len(idx["props"]):
-                return idx["props"][idx_num]
-        
-        # Try with buffer for boundary points
-        if not candidates_indices:
-            try:
-                buffered_pt = pt.buffer(0.0001)
-                candidates_indices = list(idx["tree"].query(buffered_pt, predicate="intersects"))
-            except:
-                pass
-            
-            for idx_num in candidates_indices:
-                if 0 <= idx_num < len(idx["props"]):
-                    if idx["geoms"][idx_num].contains(pt) or idx["geoms"][idx_num].intersects(pt):
-                        return idx["props"][idx_num]
-        
-        # Direct iteration fallback
-        for i, geom in enumerate(idx["geoms"]):
-            try:
-                if geom.contains(pt) or geom.intersects(pt):
-                    return idx["props"][i]
-            except:
-                continue
-    except:
-        pass
-    
-    return {}
-
+# ---------------------- Rest of the functions ----------------------
 @st.cache_data(show_spinner=False)
-def nuts2_lookup(lat: float, lon: float) -> Dict[str, Any]:
-    idx = load_nuts2_index()
-    if not idx.get("ok"):
-        return {}
-    return _nuts_lookup_generic(idx, lat, lon)
-
-@st.cache_data(show_spinner=False)
-def nuts3_lookup(lat: float, lon: float) -> Dict[str, Any]:
-    idx = load_nuts3_index()
-    if not idx.get("ok"):
-        return {}
-    return _nuts_lookup_generic(idx, lat, lon)
-
-# ---------------------- Highway/Expressway Detection ----------------------
-@st.cache_data(show_spinner=False, ttl=3600)
-def find_nearest_highway_access(lat: float, lon: float, radius_km: float = 50) -> Dict[str, Any]:
-    """Find nearest highway/expressway access point using Overpass API"""
-    overpass_query = f"""
-    [out:json][timeout:25];
-    (
-      node["highway"="motorway_junction"](around:{radius_km * 1000},{lat},{lon});
-      way["highway"~"motorway_link|trunk_link"](around:{radius_km * 1000},{lat},{lon});
-      node(w);
-    );
-    out body;
-    >;
-    out skel qt;
-    """
-    
-    try:
-        response = requests.post(
-            OVERPASS_URL,
-            data=overpass_query,
-            headers={'Content-Type': 'application/x-www-form-urlencoded'},
-            timeout=30
-        )
-        response.raise_for_status()
-        data = response.json()
-        
-        if not data.get('elements'):
-            # Fallback to major roads
-            fallback_query = f"""
-            [out:json][timeout:25];
-            (
-              way["highway"~"primary|trunk"](around:{radius_km * 1000},{lat},{lon});
-              node(w);
-            );
-            out body;
-            >;
-            out skel qt;
-            """
-            response = requests.post(OVERPASS_URL, data=fallback_query, 
-                                    headers={'Content-Type': 'application/x-www-form-urlencoded'}, timeout=30)
-            response.raise_for_status()
-            data = response.json()
-        
-        min_dist = float('inf')
-        nearest = None
-        
-        for element in data.get('elements', []):
-            if element['type'] == 'node' and 'lat' in element and 'lon' in element:
-                node_lat = element['lat']
-                node_lon = element['lon']
-                dist = haversine_km(lat, lon, node_lat, node_lon)
-                
-                if dist < min_dist:
-                    min_dist = dist
-                    nearest = {
-                        'lat': node_lat,
-                        'lon': node_lon,
-                        'distance_straight_km': round(dist, 2),
-                        'name': element.get('tags', {}).get('name', ''),
-                        'ref': element.get('tags', {}).get('ref', ''),
-                        'highway_type': element.get('tags', {}).get('highway', 'junction'),
-                        'id': element.get('id')
-                    }
-        
-        return nearest if nearest else {}
-    except:
-        return {}
-
-def get_highway_distance(site_lat: float, site_lon: float, route_cache: Dict = None) -> Tuple[Optional[float], Optional[float], Optional[str]]:
-    """Calculate road distance to nearest highway/expressway access"""
-    if route_cache is None:
-        route_cache = {}
-    
-    highway_access = find_nearest_highway_access(site_lat, site_lon)
-    
-    if not highway_access:
-        return None, None, None
-    
-    try:
-        origin = (site_lat, site_lon)
-        dest = (highway_access['lat'], highway_access['lon'])
-        
-        dist_km, dur_min = get_route(origin, dest, route_cache=route_cache)
-        
-        access_name = ""
-        if highway_access.get('name'):
-            access_name = highway_access['name']
-        elif highway_access.get('ref'):
-            access_name = f"Junction {highway_access['ref']}"
-        else:
-            access_name = f"Highway Access ({highway_access['highway_type']})"
-        
-        return dist_km, dur_min, access_name
-    except:
-        return highway_access.get('distance_straight_km'), None, "Highway Access"
-
-# ---------------------- Eurostat API Integration ----------------------
-@st.cache_data(show_spinner=False, ttl=86400)
-def fetch_eurostat_data(dataset_code: str, filters: Dict[str, List[str]] = None) -> pd.DataFrame:
-    """Fetch data from Eurostat API"""
-    try:
-        params = {"format": "JSON", "lang": "en"}
-        filter_str = ""
-        if filters:
-            filter_parts = []
-            for key, values in filters.items():
-                if values:
-                    filter_parts.append(f"{key}={'+'.join(values)}")
-            if filter_parts:
-                filter_str = "?" + "&".join(filter_parts)
-        
-        url = f"{EUROSTAT_DATA_V2}/{dataset_code}{filter_str}"
-        response = requests.get(url, params=params, timeout=30)
-        response.raise_for_status()
-        data = response.json()
-        
-        dimensions = data.get("dimension", {})
-        values = data.get("value", {})
-        
-        dim_data = {}
-        dim_positions = {}
-        
-        for dim_name, dim_info in dimensions.items():
-            dim_data[dim_name] = dim_info.get("category", {}).get("index", {})
-            dim_positions[dim_name] = dim_info.get("category", {}).get("label", {})
-        
-        records = []
-        for idx_str, value in values.items():
-            idx = int(idx_str)
-            record = {"value": value}
-            
-            temp_idx = idx
-            for dim_name in reversed(list(dimensions.keys())):
-                dim_size = len(dim_data[dim_name])
-                dim_idx = temp_idx % dim_size
-                temp_idx = temp_idx // dim_size
-                
-                for key, pos in dim_data[dim_name].items():
-                    if pos == dim_idx:
-                        record[dim_name] = key
-                        if dim_name in dim_positions and key in dim_positions[dim_name]:
-                            record[f"{dim_name}_label"] = dim_positions[dim_name][key]
-                        break
-            
-            records.append(record)
-        
-        return pd.DataFrame(records)
-    except:
-        return pd.DataFrame()
-
-@st.cache_data(show_spinner=False, ttl=86400)
-def get_nuts3_population(nuts3_codes: List[str], year: str = "2023") -> Dict[str, float]:
-    """Get population for NUTS3 regions"""
-    if not nuts3_codes:
-        return {}
-    
-    filters = {
-        "geo": nuts3_codes,
-        "time": [year],
-        "age": ["TOTAL"],
-        "sex": ["T"],
-        "unit": ["NR"]
-    }
-    
-    df = fetch_eurostat_data(POPULATION_DATASET, filters)
-    
-    if df.empty:
-        filters["time"] = [str(int(year) - 1)]
-        df = fetch_eurostat_data(POPULATION_DATASET, filters)
-    
-    population_map = {}
-    for _, row in df.iterrows():
-        if "geo" in row and "value" in row:
-            population_map[row["geo"]] = float(row["value"])
-    
-    return population_map
-
-@st.cache_data(show_spinner=False, ttl=86400)
-def get_nuts3_unemployed_persons(nuts3_codes: List[str], year: str = "2023") -> Dict[str, float]:
-    """Get total unemployed persons for NUTS3 regions"""
-    if not nuts3_codes:
-        return {}
-    
-    filters = {
-        "geo": nuts3_codes,
-        "time": [year],
-        "age": ["Y15-74"],
-        "sex": ["T"],
-        "unit": ["THS_PER"]  # Thousand persons
-    }
-    
-    df = fetch_eurostat_data(UNEMPLOYMENT_DATASET, filters)
-    
-    if df.empty:
-        filters["time"] = [str(int(year) - 1)]
-        df = fetch_eurostat_data(UNEMPLOYMENT_DATASET, filters)
-    
-    unemployed_map = {}
-    for _, row in df.iterrows():
-        if "geo" in row and "value" in row:
-            unemployed_map[row["geo"]] = float(row["value"]) * 1000  # Convert from thousands
-    
-    return unemployed_map
-
-@st.cache_data(show_spinner=False, ttl=86400)
-def get_nuts3_active_population(nuts3_codes: List[str], year: str = "2023") -> Dict[str, float]:
-    """Get active population for NUTS3 regions"""
-    if not nuts3_codes:
-        return {}
-    
-    filters = {
-        "geo": nuts3_codes,
-        "time": [year],
-        "age": ["Y15-74"],
-        "sex": ["T"],
-        "unit": ["THS_PER"]
-    }
-    
-    df = fetch_eurostat_data(ACTIVE_POP_DATASET, filters)
-    
-    if df.empty:
-        filters["time"] = [str(int(year) - 1)]
-        df = fetch_eurostat_data(ACTIVE_POP_DATASET, filters)
-    
-    active_map = {}
-    for _, row in df.iterrows():
-        if "geo" in row and "value" in row:
-            active_map[row["geo"]] = float(row["value"]) * 1000
-    
-    return active_map
-
-def calculate_catchment_area(site_lat: float, site_lon: float, radius_km: float = 50, year: str = "2023") -> Dict[str, Any]:
-    """Calculate catchment area statistics with total unemployed persons"""
-    results = {
-        "catchment_radius_km": radius_km,
-        "total_population": 0,
-        "unemployed_persons": 0,
-        "active_population": 0,
-        "employed_persons": 0,
-        "nuts3_regions": [],
-        "data_year": year
-    }
-    
-    try:
-        nuts3_idx = load_nuts3_index()
-        
-        if not nuts3_idx.get("ok"):
-            return results
-        
-        nearby_nuts3 = []
-        nearby_distances = []
-        
-        for i, geom in enumerate(nuts3_idx["geoms"]):
-            try:
-                centroid = geom.centroid
-                dist_km = haversine_km(site_lat, site_lon, centroid.y, centroid.x)
-                
-                if dist_km <= radius_km:
-                    nuts3_code = nuts3_idx["props"][i].get("NUTS_ID")
-                    if nuts3_code:
-                        nearby_nuts3.append(nuts3_code)
-                        nearby_distances.append(dist_km)
-            except:
-                continue
-        
-        if not nearby_nuts3:
-            containing = nuts3_lookup(site_lat, site_lon)
-            if containing and containing.get("NUTS_ID"):
-                nearby_nuts3 = [containing["NUTS_ID"]]
-                nearby_distances = [0]
-        
-        if nearby_nuts3:
-            pop_data = get_nuts3_population(nearby_nuts3, year)
-            unemployed_data = get_nuts3_unemployed_persons(nearby_nuts3, year)
-            active_pop_data = get_nuts3_active_population(nearby_nuts3, year)
-            
-            total_pop = 0
-            total_unemployed = 0
-            total_active = 0
-            weights = []
-            
-            for nuts3_code, dist in zip(nearby_nuts3, nearby_distances):
-                weight = 1.0 / (1.0 + dist / 10.0)
-                weights.append(weight)
-                
-                if nuts3_code in pop_data:
-                    total_pop += pop_data[nuts3_code] * weight
-                
-                if nuts3_code in unemployed_data:
-                    total_unemployed += unemployed_data[nuts3_code] * weight
-                
-                if nuts3_code in active_pop_data:
-                    total_active += active_pop_data[nuts3_code] * weight
-                elif nuts3_code in pop_data:
-                    total_active += pop_data[nuts3_code] * 0.65 * weight
-            
-            if weights:
-                total_weight = sum(weights)
-                total_pop = total_pop / total_weight
-                total_unemployed = total_unemployed / total_weight
-                total_active = total_active / total_weight
-            
-            results["total_population"] = int(total_pop)
-            results["unemployed_persons"] = int(total_unemployed)
-            results["active_population"] = int(total_active)
-            results["employed_persons"] = int(total_active - total_unemployed)
-            results["nuts3_regions"] = nearby_nuts3[:5]
-    except:
-        pass
-    
-    return results
-
-# ---------------------- OSM Geocoding ----------------------
-@st.cache_data(show_spinner=False)
-def osm_reverse(lat: float, lon: float) -> Dict[str, Any]:
-    """Reverse geocode coordinates to get administrative information"""
-    params = {"format": "jsonv2", "lat": float(lat), "lon": float(lon), "addressdetails": 1, "extratags": 1}
-    headers = {"User-Agent": "RoadDistanceFinder/2.0"}
-    try:
-        r = requests.get(NOMINATIM_REVERSE, params=params, headers=headers, timeout=12)
-        r.raise_for_status()
-        data = r.json()
-        addr = data.get("address", {})
-        ex = data.get("extratags", {})
-        municipality = addr.get("municipality") or addr.get("city") or addr.get("town") or addr.get("village") or addr.get("suburb")
-        county = addr.get("county") or addr.get("state_district")
-        voivodeship = addr.get("state")
-        muni_code = ex.get("ref:teryt:simc") or ex.get("ref:teryt") or ""
-        county_code = ex.get("ref:teryt:powiat") or ""
-        voiv_code = ex.get("ref:teryt:wojewodztwo") or addr.get("ISO3166-2-lvl4") or ""
-        return {
-            "municipality": municipality or "",
-            "municipality_code": muni_code,
-            "county": county or "",
-            "county_code": county_code,
-            "voivodeship": voivodeship or "",
-            "voivodeship_code": voiv_code,
-        }
-    except:
-        return {"municipality": "", "municipality_code": "", "county": "", "county_code": "", 
-                "voivodeship": "", "voivodeship_code": ""}
-
-@st.cache_data(show_spinner=False)
-def osm_search(query: str, limit: int = 5) -> List[Dict[str, Any]]:
-    """Search for places by name"""
-    if not query:
-        return []
-    params = {"q": query, "format": "json", "addressdetails": 1, "limit": limit}
-    headers = {"User-Agent": "RoadDistanceFinder/2.0"}
-    try:
-        r = requests.get(NOMINATIM_SEARCH, params=params, headers=headers, timeout=12)
-        r.raise_for_status()
-        results = r.json()
-        out = []
-        for res in results:
-            try:
-                out.append({
-                    "display_name": str(res.get("display_name", "")), 
-                    "lat": float(res.get("lat")), 
-                    "lon": float(res.get("lon"))
-                })
-            except:
-                continue
-        return out
-    except:
-        return []
-
-# ---------------------- OSRM Routing ----------------------
-def route_via_osrm(origin: Tuple[float, float], dest: Tuple[float, float], timeout_s: int = 20) -> Tuple[float, float]:
-    """Get road distance and time via OSRM"""
-    url = OSRM_URL.format(lon1=origin[1], lat1=origin[0], lon2=dest[1], lat2=dest[0])
-    r = requests.get(url, timeout=timeout_s)
-    if r.status_code != 200:
-        raise RuntimeError(f"OSRM HTTP {r.status_code}")
-    data = r.json()
-    if data.get("code") != "Ok":
-        raise RuntimeError(f"OSRM error: {data.get('code')}")
-    route = data["routes"][0]
-    dist_km = float(route["distance"]) / 1000.0
-    dur_min = float(route["duration"]) / 60.0
-    return dist_km, dur_min
-
-@st.cache_data(show_spinner=False)
-def _route_key(origin: Tuple[float, float], dest: Tuple[float, float]) -> str:
-    return f"OSRM:{origin[0]:.6f},{origin[1]:.6f}->{dest[0]:.6f},{dest[1]:.6f}"
-
-def get_route(origin: Tuple[float, float], dest: Tuple[float, float], route_cache: Dict = None) -> Tuple[float, float]:
-    """Get route with caching"""
-    if route_cache is None:
-        route_cache = {}
-    key = _route_key(origin, dest)
-    if key in route_cache:
-        v = route_cache[key]
-        return v["distance_km"], v["duration_min"]
-    dist_km, dur_min = route_via_osrm(origin, dest)
-    route_cache[key] = {"distance_km": dist_km, "duration_min": dur_min}
-    return dist_km, dur_min
-
-# ---------------------- National Admin Boundaries ----------------------
-class AdminIndex:
-    def __init__(self, geoms: List[Any], props: List[Dict[str, Any]]):
-        self.geoms = geoms
-        self.props = props
-        self.tree = STRtree(geoms) if (geoms and _HAS_SHAPELY) else None
-
-    def lookup(self, lat: float, lon: float) -> Dict[str, Any]:
-        if not self.tree:
-            return {}
-        pt = Point(float(lon), float(lat))
-        try:
-            cands = self.tree.query(pt)
-        except:
-            cands = []
-        for g in cands:
-            try:
-                if g.covers(pt) or g.contains(pt) or g.intersects(pt):
-                    try:
-                        ix = self.geoms.index(g)
-                    except:
-                        ix = None
-                    if ix is not None:
-                        return self.props[ix]
-            except:
-                continue
-        for ix, g in enumerate(self.geoms):
-            try:
-                if g.covers(pt) or g.contains(pt) or g.intersects(pt):
-                    return self.props[ix]
-            except:
-                continue
-        return {}
-
-def build_admin_index_from_geojson(gj: Dict[str, Any], code_field: str, name_field: str, 
-                                  alt_code_fields=None, alt_name_fields=None) -> Optional[AdminIndex]:
+def load_nuts3_data():
+    """Load NUTS3 boundaries for enrichment"""
     if not _HAS_SHAPELY:
         return None
+    
     try:
-        geoms = []
-        props = []
-        for feat in gj.get("features", []):
-            pr = feat.get("properties", {})
-            try:
-                g = shape(feat.get("geometry"))
-                if g.is_empty:
-                    continue
-                code_val = pr.get(code_field)
-                name_val = pr.get(name_field)
-                if (not code_val) and alt_code_fields:
-                    for cf in alt_code_fields:
-                        if pr.get(cf):
-                            code_val = pr.get(cf)
-                            break
-                if (not name_val) and alt_name_fields:
-                    for nf in alt_name_fields:
-                        if pr.get(nf):
-                            name_val = pr.get(nf)
-                            break
-                geoms.append(g)
-                props.append({"code": str(code_val or ""), "name": str(name_val or "")})
-            except:
-                continue
-        if not geoms:
+        resp = requests.get(NUTS3_URL, timeout=10)
+        if resp.status_code != 200:
             return None
-        return AdminIndex(geoms, props)
+        geojson = resp.json()
+        features = geojson.get("features", [])
+        tree_data = []
+        for f in features:
+            geom = shape(f.get("geometry"))
+            props = f.get("properties", {})
+            nuts3_id = props.get("NUTS_ID", "")
+            tree_data.append((geom, nuts3_id))
+        if tree_data:
+            return tree_data
     except:
-        return None
+        pass
+    return None
 
-@st.cache_resource(show_spinner=False)
-def load_official_PL() -> Dict[str, Any]:
-    """Load Polish administrative boundaries"""
+@st.cache_data(show_spinner=False)
+def load_osm_admin_pl():
+    """Load Polish admin boundaries"""
     if not _HAS_SHAPELY:
-        return {}
-    urls = {
-        "gmina": "https://mapy.geoportal.gov.pl/wss/service/PZGIK/PRG/WFS/AdministrativeBoundaries?SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=prg:gminy&OUTPUTFORMAT=application/json",
-        "powiat": "https://mapy.geoportal.gov.pl/wss/service/PZGIK/PRG/WFS/AdministrativeBoundaries?SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=prg:powiaty&OUTPUTFORMAT=application/json",
-        "woj": "https://mapy.geoportal.gov.pl/wss/service/PZGIK/PRG/WFS/AdministrativeBoundaries?SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=prg:wojewodztwa&OUTPUTFORMAT=application/json",
-    }
-    out = {}
-    for level, url in urls.items():
-        try:
-            r = requests.get(url, timeout=60)
-            r.raise_for_status()
-            gj = r.json()
-            idx = build_admin_index_from_geojson(
-                gj, code_field="JPT_KOD_JE", name_field="JPT_NAZWA_",
-                alt_code_fields=["TERYT", "TERC"], alt_name_fields=["NAZWA"]
-            )
-            if idx:
-                out[level] = idx
-        except:
-            continue
-    return out
-
-if "official_admin" not in st.session_state:
-    st.session_state["official_admin"] = load_official_PL()
-    st.session_state["official_admin_country"] = "PL"
-
-@st.cache_resource(show_spinner=False)
-def load_index_from_url(url: str, code_field: str, name_field: str, 
-                        alt_code_fields: List[str] = None, alt_name_fields: List[str] = None) -> Optional[AdminIndex]:
-    try:
-        r = requests.get(url, timeout=90)
-        r.raise_for_status()
-        gj = r.json()
-        return build_admin_index_from_geojson(gj, code_field, name_field, alt_code_fields, alt_name_fields)
-    except:
         return None
-
-# ---------------------- Validation ----------------------
-def _validate_columns(df: pd.DataFrame, required_cols: List[str]) -> List[str]:
-    return [c for c in required_cols if c not in df.columns]
-
-def _validate_latlon(lat: pd.Series, lon: pd.Series) -> str:
+    
     try:
-        if not (np.isfinite(lat).all() and np.isfinite(lon).all()):
-            return "Latitude/Longitude contain non-numeric values"
-        if not (((lat >= -90) & (lat <= 90)).all() and ((lon >= -180) & (lon <= 180)).all()):
-            return "Latitude must be in [-90,90] and Longitude in [-180,180]"
-        return ""
+        resp = requests.get("https://nominatim.openstreetmap.org/data/boundary-data.geojson", timeout=10)
+        if resp.status_code != 200:
+            return None
+        geojson = resp.json()
+        features = geojson.get("features", [])
+        admin_data = []
+        for f in features:
+            geom = shape(f.get("geometry"))
+            props = f.get("properties", {})
+            admin_data.append((geom, props))
+        if admin_data:
+            return admin_data
     except:
-        return "Latitude/Longitude validation failed"
+        pass
+    return None
 
-# ---------------------- Main Processing Function ----------------------
-def process_batch(
-    sites: pd.DataFrame,
-    airports: pd.DataFrame,
-    seaports: pd.DataFrame,
-    topn: int,
-    include_ref: bool,
-    ref_lat: float,
-    ref_lon: float,
-    ref_name: str,
-    pause_every: int,
-    pause_secs: float,
-    progress_hook=None,
-    enrich_nuts3: bool = True,
-    enrich_osm_admin: bool = True,
-    include_highway: bool = True,
-    include_catchment: bool = True,
-    catchment_radius: float = 50,
-) -> Tuple[pd.DataFrame, List[Dict[str, Any]], int]:
-    """Main processing function with all features"""
+def enrich_nuts3(lat: float, lon: float, nuts3_data: Optional[List] = None) -> str:
+    """Enrich with NUTS3 ID"""
+    if not _HAS_SHAPELY or not nuts3_data:
+        return ""
     
-    sites = sites.copy()
-    airports = airports.copy()
-    seaports = seaports.copy()
+    try:
+        pt = Point(lon, lat)
+        for geom, nuts3_id in nuts3_data:
+            if geom.contains(pt):
+                return nuts3_id
+    except:
+        pass
+    return ""
+
+def get_route(lat1: float, lon1: float, lat2: float, lon2: float) -> Optional[Dict]:
+    """Get route distance and time from OSRM"""
+    cache_key = f"{lat1:.4f},{lon1:.4f},{lat2:.4f},{lon2:.4f}"
+    if "route_cache" not in st.session_state:
+        st.session_state["route_cache"] = {}
     
-    # Coerce numeric
-    for col in ["Latitude", "Longitude"]:
-        sites[col] = pd.to_numeric(sites[col], errors="coerce")
-        airports[col] = pd.to_numeric(airports[col], errors="coerce")
-        seaports[col] = pd.to_numeric(seaports[col], errors="coerce")
+    if cache_key in st.session_state["route_cache"]:
+        return st.session_state["route_cache"][cache_key]
     
-    # Validate
-    err = (_validate_latlon(sites["Latitude"], sites["Longitude"]) or
-           _validate_latlon(airports["Latitude"], airports["Longitude"]) or
-           _validate_latlon(seaports["Latitude"], seaports["Longitude"]))
-    if err:
-        raise ValueError(err)
+    try:
+        url = OSRM_URL.format(lon1=lon1, lat1=lat1, lon2=lon2, lat2=lat2)
+        resp = requests.get(url, timeout=10)
+        if resp.status_code == 200:
+            data = resp.json()
+            if data.get("routes"):
+                route = data["routes"][0]
+                result = {
+                    "distance_km": route.get("distance", 0) / 1000,
+                    "duration_min": route.get("duration", 0) / 60
+                }
+                st.session_state["route_cache"][cache_key] = result
+                return result
+    except:
+        pass
+    return None
+
+def get_nearest_highway(lat: float, lon: float) -> Optional[str]:
+    """Get nearest highway using Overpass API"""
+    try:
+        query = f"""
+        [bbox:{lat-0.05},{lon-0.05},{lat+0.05},{lon+0.05}];
+        way["highway"~"motorway|trunk|primary"];
+        out geom;
+        """
+        resp = requests.post(OVERPASS_URL, data=query, timeout=10)
+        if resp.status_code == 200:
+            data = resp.json()
+            if data.get("elements"):
+                for elem in data["elements"]:
+                    name = elem.get("tags", {}).get("name", "")
+                    if name:
+                        return name
+    except:
+        pass
+    return None
+
+def process_batch(sites_df: pd.DataFrame, airports_df: pd.DataFrame, seaports_df: pd.DataFrame,
+                  topn: int = 5, include_ref: bool = True, ref_lat: float = 51.0126, ref_lon: float = 6.5741,
+                  ref_name: str = "Reference", pause_every: int = 10, pause_secs: float = 1.0,
+                  progress_hook = None, enrich_nuts3: bool = True, enrich_osm_admin: bool = True,
+                  include_highway: bool = True, include_catchment: bool = True, catchment_radius: int = 50) -> Tuple:
+    """Process batch of sites"""
     
-    a_lat = airports["Latitude"].to_numpy()
-    a_lon = airports["Longitude"].to_numpy()
-    p_lat = seaports["Latitude"].to_numpy()
-    p_lon = seaports["Longitude"].to_numpy()
+    nuts3_data = load_nuts3_data() if enrich_nuts3 else None
+    osm_admin = load_osm_admin_pl() if enrich_osm_admin else None
     
-    route_cache = st.session_state.get("route_cache", {})
     results = []
     logs = []
     api_calls = 0
-    total = len(sites)
     
-    for idx, row in sites.iterrows():
-        project_id = str(row.get("Project ID", "")).strip()
-        site_id = str(row.get("Site ID", "")).strip()
-        site_name = str(row["Site Name"]).strip()
-        slat = float(row["Latitude"])
-        slon = float(row["Longitude"])
-        site_origin = (slat, slon)
-        
-        log_rec = {"site": site_name, "steps": []}
-        out_rec = {
-            "Project ID": project_id,
-            "Site ID": site_id,
-            "Site Name": site_name,
-            "Latitude": round(slat, 6),
-            "Longitude": round(slon, 6),
-            "Nearest Airport": None,
-            "Nearest Airport Code": None,
-            "Distance to Airport (km)": None,
-            "Time to Airport (min)": None,
-            "Nearest Seaport": None,
-            "Distance to Seaport (km)": None,
-            "Time to Seaport (min)": None,
-            "Nearest Highway Access": None,
-            "Distance to Highway (km)": None,
-            "Time to Highway (min)": None,
-            "Municipality": None,
-            "Municipality Code": None,
-            "County": None,
-            "County Code": None,
-            "Voivodeship": None,
-            "Voivodeship Code": None,
-            "NUTS2 Code": None,
-            "NUTS2 Name": None,
-            "NUTS3 Code": None,
-            "NUTS3 Name": None,
-        }
-        
-        # Add catchment fields
-        if include_catchment:
-            out_rec[f"Catchment Population ({int(catchment_radius)}km)"] = None
-            out_rec[f"Catchment Unemployed ({int(catchment_radius)}km)"] = None
-            out_rec[f"Catchment Active Pop ({int(catchment_radius)}km)"] = None
-            out_rec[f"Catchment Employed ({int(catchment_radius)}km)"] = None
-            out_rec["Catchment NUTS3 Regions"] = None
-        
-        if include_ref:
-            out_rec[f"Distance to {ref_name} (km)"] = None
-            out_rec[f"Time to {ref_name} (min)"] = None
+    for idx, site in sites_df.iterrows():
+        site_log = {"site": site.get("Site Name", f"Site {idx}"), "steps": []}
+        site_results = dict(site)
         
         try:
-            # Find nearest airport
-            dists_a = haversine_km(slat, slon, a_lat, a_lon)
-            idxs_a = np.argsort(dists_a)[:min(topn, len(airports))]
-            cand_airports = airports.iloc[idxs_a].copy()
+            site_lat = float(site["Latitude"])
+            site_lon = float(site["Longitude"])
             
-            best_air, best_air_d, best_air_t = None, math.inf, math.inf
-            for _, a in cand_airports.iterrows():
-                dest = (float(a["Latitude"]), float(a["Longitude"]))
-                try:
-                    if api_calls and pause_every and api_calls % pause_every == 0:
-                        if progress_hook:
-                            progress_hook(f"Pausing {pause_secs}s...")
-                        time.sleep(pause_secs)
-                    dist_km, dur_min = get_route(site_origin, dest, route_cache=route_cache)
-                    api_calls += 1
-                    if dist_km < best_air_d:
-                        best_air, best_air_d, best_air_t = a, dist_km, dur_min
-                except Exception as e:
-                    log_rec["steps"].append({"error": f"Airport '{a['Airport Name']}': {e}"})
+            # NUTS3 enrichment
+            if enrich_nuts3 and nuts3_data:
+                nuts3_id = enrich_nuts3(site_lat, site_lon, nuts3_data)
+                site_results["NUTS3 ID"] = nuts3_id
+                site_log["steps"].append({"msg": f"NUTS3: {nuts3_id}"})
             
-            if best_air is not None:
-                out_rec["Nearest Airport"] = str(best_air.get("Airport Name"))
-                out_rec["Nearest Airport Code"] = str(best_air.get("IATA") or best_air.get("ICAO") or "")
-                out_rec["Distance to Airport (km)"] = round(best_air_d, 1)
-                out_rec["Time to Airport (min)"] = round(best_air_t, 1)
+            # Nearest Airport (prefilter top-N)
+            nearest_airports = []
+            for _, airport in airports_df.iterrows():
+                dist = haversine_km(site_lat, site_lon, float(airport["Latitude"]), float(airport["Longitude"]))
+                nearest_airports.append((airport["Airport Name"], dist))
             
-            # Find nearest seaport
-            dists_p = haversine_km(slat, slon, p_lat, p_lon)
-            idxs_p = np.argsort(dists_p)[:min(topn, len(seaports))]
-            cand_ports = seaports.iloc[idxs_p].copy()
+            nearest_airports.sort(key=lambda x: x[1])
+            nearest_airports = nearest_airports[:topn]
             
-            best_port, best_port_d, best_port_t = None, math.inf, math.inf
-            for _, p in cand_ports.iterrows():
-                dest = (float(p["Latitude"]), float(p["Longitude"]))
-                try:
-                    if api_calls and pause_every and api_calls % pause_every == 0:
-                        if progress_hook:
-                            progress_hook(f"Pausing {pause_secs}s...")
-                        time.sleep(pause_secs)
-                    dist_km, dur_min = get_route(site_origin, dest, route_cache=route_cache)
-                    api_calls += 1
-                    if dist_km < best_port_d:
-                        best_port, best_port_d, best_port_t = p, dist_km, dur_min
-                except Exception as e:
-                    log_rec["steps"].append({"error": f"Seaport '{p['Seaport Name']}': {e}"})
+            if nearest_airports:
+                airport_name, airport_dist = nearest_airports[0]
+                airport_row = airports_df[airports_df["Airport Name"] == airport_name].iloc[0]
+                route = get_route(site_lat, site_lon, float(airport_row["Latitude"]), float(airport_row["Longitude"]))
+                api_calls += 1
+                
+                if route:
+                    site_results["Nearest Airport"] = airport_name
+                    site_results["Distance to Airport (km)"] = round(route["distance_km"], 2)
+                    site_results["Time to Airport (min)"] = round(route["duration_min"], 1)
+                    site_log["steps"].append({"msg": f"Airport: {airport_name} - {route['distance_km']:.1f}km"})
             
-            if best_port is not None:
-                out_rec["Nearest Seaport"] = str(best_port.get("Seaport Name"))
-                out_rec["Distance to Seaport (km)"] = round(best_port_d, 1)
-                out_rec["Time to Seaport (min)"] = round(best_port_t, 1)
+            # Nearest Seaport (prefilter top-N)
+            nearest_seaports = []
+            for _, seaport in seaports_df.iterrows():
+                dist = haversine_km(site_lat, site_lon, float(seaport["Latitude"]), float(seaport["Longitude"]))
+                nearest_seaports.append((seaport["Seaport Name"], dist))
             
-            # Highway distance
-            if include_highway:
-                try:
-                    if api_calls and pause_every and api_calls % pause_every == 0:
-                        if progress_hook:
-                            progress_hook(f"Pausing {pause_secs}s...")
-                        time.sleep(pause_secs)
-                    
-                    highway_dist, highway_time, highway_name = get_highway_distance(slat, slon, route_cache=route_cache)
-                    api_calls += 1
-                    
-                    if highway_dist is not None:
-                        out_rec["Nearest Highway Access"] = highway_name
-                        out_rec["Distance to Highway (km)"] = round(highway_dist, 1)
-                        if highway_time is not None:
-                            out_rec["Time to Highway (min)"] = round(highway_time, 1)
-                except Exception as e:
-                    log_rec["steps"].append({"error": f"Highway: {e}"})
+            nearest_seaports.sort(key=lambda x: x[1])
+            nearest_seaports = nearest_seaports[:topn]
             
-            # Reference distance
+            if nearest_seaports:
+                seaport_name, seaport_dist = nearest_seaports[0]
+                seaport_row = seaports_df[seaports_df["Seaport Name"] == seaport_name].iloc[0]
+                route = get_route(site_lat, site_lon, float(seaport_row["Latitude"]), float(seaport_row["Longitude"]))
+                api_calls += 1
+                
+                if route:
+                    site_results["Nearest Seaport"] = seaport_name
+                    site_results["Distance to Seaport (km)"] = round(route["distance_km"], 2)
+                    site_results["Time to Seaport (min)"] = round(route["duration_min"], 1)
+                    site_log["steps"].append({"msg": f"Seaport: {seaport_name} - {route['distance_km']:.1f}km"})
+            
+            # Reference location (Outbound)
             if include_ref:
-                try:
-                    if api_calls and pause_every and api_calls % pause_every == 0:
-                        if progress_hook:
-                            progress_hook(f"Pausing {pause_secs}s...")
-                        time.sleep(pause_secs)
-                    dist_km, dur_min = get_route(site_origin, (ref_lat, ref_lon), route_cache=route_cache)
+                route = get_route(site_lat, site_lon, ref_lat, ref_lon)
+                api_calls += 1
+                
+                if route:
+                    site_results["Distance to Reference (km)"] = round(route["distance_km"], 2)
+                    site_results["Time to Reference (min)"] = round(route["duration_min"], 1)
+                    site_log["steps"].append({"msg": f"Outbound ({ref_name}): {route['distance_km']:.1f}km"})
+            
+            # Nearest City (100k+)
+            city_result = find_nearest_city(site_lat, site_lon, max_distance=200)
+            if city_result:
+                city_name, city_dist = city_result
+                city_row = [c for c in MAJOR_CITIES_DB.values() for c in c if c["name"] == city_name]
+                if city_row:
+                    c = city_row[0]
+                    route = get_route(site_lat, site_lon, c["lat"], c["lon"])
                     api_calls += 1
-                    out_rec[f"Distance to {ref_name} (km)"] = round(dist_km, 1)
-                    out_rec[f"Time to {ref_name} (min)"] = round(dur_min, 1)
-                except Exception as e:
-                    log_rec["steps"].append({"error": f"Reference: {e}"})
-            
-            # NUTS enrichment
-            if _HAS_SHAPELY:
-                try:
-                    n2 = nuts2_lookup(slat, slon)
-                    if n2:
-                        out_rec["NUTS2 Code"] = n2.get("NUTS_ID")
-                        out_rec["NUTS2 Name"] = n2.get("NAME_LATN")
-                except:
-                    pass
-                
-                try:
-                    n3 = nuts3_lookup(slat, slon)
-                    if n3:
-                        out_rec["NUTS3 Code"] = n3.get("NUTS_ID")
-                        out_rec["NUTS3 Name"] = n3.get("NAME_LATN")
-                except:
-                    pass
-            
-            # Catchment area
-            if include_catchment:
-                try:
-                    catchment = calculate_catchment_area(slat, slon, radius_km=catchment_radius)
                     
-                    if catchment["total_population"] > 0:
-                        out_rec[f"Catchment Population ({int(catchment_radius)}km)"] = catchment["total_population"]
-                        out_rec[f"Catchment Unemployed ({int(catchment_radius)}km)"] = catchment["unemployed_persons"]
-                        out_rec[f"Catchment Active Pop ({int(catchment_radius)}km)"] = catchment["active_population"]
-                        out_rec[f"Catchment Employed ({int(catchment_radius)}km)"] = catchment["employed_persons"]
-                        out_rec["Catchment NUTS3 Regions"] = ", ".join(catchment["nuts3_regions"][:3])
-                except:
-                    pass
+                    if route:
+                        site_results["Nearest City"] = city_name
+                        site_results["Distance to City (km)"] = round(route["distance_km"], 2)
+                        site_results["Time to City (min)"] = round(route["duration_min"], 1)
+                        site_log["steps"].append({"msg": f"City: {city_name} - {route['distance_km']:.1f}km"})
             
-            # Admin boundaries
-            have_official = False
-            try:
-                auto = st.session_state.get("official_admin", {})
-                idx_woj = auto.get("woj")
-                idx_pow = auto.get("powiat")
-                idx_gmi = auto.get("gmina")
-                
-                if idx_woj:
-                    w = idx_woj.lookup(slat, slon)
-                    if w:
-                        out_rec["Voivodeship"] = w.get("name")
-                        out_rec["Voivodeship Code"] = w.get("code")
-                        have_official = True
-                
-                if idx_pow:
-                    p = idx_pow.lookup(slat, slon)
-                    if p:
-                        out_rec["County"] = p.get("name")
-                        out_rec["County Code"] = p.get("code")
-                        have_official = True
-                
-                if idx_gmi:
-                    g = idx_gmi.lookup(slat, slon)
-                    if g:
-                        out_rec["Municipality"] = g.get("name")
-                        out_rec["Municipality Code"] = g.get("code")
-                        have_official = True
-            except:
-                pass
+            # Nearest Highway
+            if include_highway:
+                highway = get_nearest_highway(site_lat, site_lon)
+                if highway:
+                    site_results["Nearest Highway"] = highway
+                    site_results["Distance to Highway (km)"] = 0  # Placeholder
+                    site_results["Time to Highway (min)"] = 0
+                    site_log["steps"].append({"msg": f"Highway: {highway}"})
             
-            if enrich_osm_admin and not have_official:
-                try:
-                    adm = osm_reverse(slat, slon)
-                    out_rec["Municipality"] = adm.get("municipality") or out_rec.get("Municipality")
-                    out_rec["Municipality Code"] = adm.get("municipality_code") or out_rec.get("Municipality Code")
-                    out_rec["County"] = adm.get("county") or out_rec.get("County")
-                    out_rec["County Code"] = adm.get("county_code") or out_rec.get("County Code")
-                    out_rec["Voivodeship"] = adm.get("voivodeship") or out_rec.get("Voivodeship")
-                    out_rec["Voivodeship Code"] = adm.get("voivodeship_code") or out_rec.get("Voivodeship Code")
-                except:
-                    pass
-        
+            results.append(site_results)
+            logs.append(site_log)
+            
         except Exception as e:
-            log_rec["steps"].append({"fatal": str(e)})
-        
-        logs.append(log_rec)
-        results.append(out_rec)
+            site_log["steps"].append({"error": str(e)})
+            logs.append(site_log)
         
         if progress_hook:
-            progress_hook(f"Processed {len(results)}/{total}")
-    
-    st.session_state["route_cache"] = route_cache
-    df_res = pd.DataFrame(results)
-    return df_res, logs, api_calls
-
-# ---------------------- UI Components ----------------------
-def sidebar():
-    """Sidebar with all configuration options"""
-    st.sidebar.header("⚙️ Settings")
-
-    # Dataset status
-    with st.sidebar.expander("📊 Dataset Status", expanded=False):
-        active_iso = st.session_state.get("official_admin_country", "PL")
-        st.markdown(f"**Active national source**: `{active_iso}`")
-        oa = st.session_state.get("official_admin", {})
-        st.markdown(f"**LAU/municipalities**: {'✅ Ready' if oa.get('gmina') else '❌ Not available'}")
-        st.markdown(f"**Counties**: {'✅ Ready' if oa.get('powiat') else '❌ Not available'}")
-        st.markdown(f"**Regions**: {'✅ Ready' if oa.get('woj') else '❌ Not available'}")
+            progress_hook(f"Processed {idx+1}/{len(sites_df)}")
         
-        n2 = load_nuts2_index()
-        n3 = load_nuts3_index()
-        st.markdown(f"**NUTS-2**: {'✅ ' + str(n2.get('count', 0)) + ' regions' if n2.get('ok') else '❌ Failed'}")
-        st.markdown(f"**NUTS-3**: {'✅ ' + str(n3.get('count', 0)) + ' regions' if n3.get('ok') else '❌ Failed'}")
-
-    # Reference location
-    st.sidebar.subheader("📍 Reference Location")
-    ref_search = st.sidebar.text_input("Search by name (OpenStreetMap)", value="")
-    if st.sidebar.button("🔍 Search") and ref_search.strip():
-        preds = osm_search(ref_search.strip(), limit=8)
-        if not preds:
-            st.sidebar.warning("No results found")
-        else:
-            labels = [p["display_name"] for p in preds]
-            choice = st.sidebar.selectbox("Select place", labels, index=0)
-            if choice:
-                det = preds[labels.index(choice)]
-                st.session_state["ref_name"] = det.get("display_name", DEFAULT_REF["name"])
-                st.session_state["ref_lat"] = det.get("lat")
-                st.session_state["ref_lon"] = det.get("lon")
-                st.sidebar.success("✅ Reference updated")
-
-    use_ref = st.sidebar.checkbox("Calculate reference distance", value=True)
-    ref_name = st.sidebar.text_input("Reference name", 
-                                     value=st.session_state.get("ref_name", DEFAULT_REF['name']), 
-                                     key="ref_name")
-    ref_lat = st.sidebar.number_input("Latitude", 
-                                      value=float(st.session_state.get("ref_lat", DEFAULT_REF['lat'])), 
-                                      format="%.6f", key="ref_lat")
-    ref_lon = st.sidebar.number_input("Longitude", 
-                                      value=float(st.session_state.get("ref_lon", DEFAULT_REF['lon'])), 
-                                      format="%.6f", key="ref_lon")
-
-    # Processing options
-    st.sidebar.subheader("🎯 Processing Options")
-    topn = st.sidebar.slider("Top-N candidates", min_value=1, max_value=10, value=3,
-                             help="Number of nearest facilities to check by road distance")
+        if pause_every > 0 and (idx + 1) % pause_every == 0:
+            time.sleep(pause_secs)
     
-    # Feature toggles
-    st.sidebar.subheader("✨ Features")
-    include_highway = st.sidebar.checkbox("🛣️ Highway distance", value=True,
-                                          help="Calculate distance to nearest highway/expressway")
-    include_catchment = st.sidebar.checkbox("👥 Catchment analysis", value=True,
-                                           help="Analyze population and labor market in surrounding area")
+    df_results = pd.DataFrame(results)
+    return df_results, logs, api_calls
+
+def sidebar():
+    """Sidebar configuration"""
+    st.sidebar.header("⚙️ Configuration")
     
-    catchment_radius = 50
-    if include_catchment:
-        catchment_radius = st.sidebar.slider("Catchment radius (km)", 
-                                            min_value=10, max_value=100, value=50, step=10)
+    topn = st.sidebar.slider("Top-N prefilter for airports/seaports", 1, 20, 5)
     
-    enrich_osm_admin = st.sidebar.checkbox("🏛️ Admin boundaries", value=True,
-                                          help="Add municipality/county/region information")
-
-    # Rate limiting
-    st.sidebar.subheader("⏱️ Rate Limiting")
-    pause_every = st.sidebar.number_input("Pause after N calls", min_value=0, max_value=100, value=0,
-                                         help="0 = no pausing")
-    pause_secs = st.sidebar.number_input("Pause duration (seconds)", min_value=0.0, max_value=30.0, 
-                                        value=0.0, step=1.0)
-
-    # Admin data loader
-    with st.sidebar.expander("🌍 Load Custom Admin Data"):
-        iso2 = st.text_input("Country ISO-2", value=st.session_state.get("official_admin_country", "PL"), 
-                           max_chars=2).upper()
-        url_g = st.text_input("Municipalities GeoJSON URL", value="")
-        url_p = st.text_input("Counties GeoJSON URL", value="")
-        url_w = st.text_input("Regions GeoJSON URL", value="")
-        code_field = st.text_input("Code field name", value="")
-        name_field = st.text_input("Name field name", value="")
-        if st.button("Load Data") and code_field and name_field:
-            new_idx = {}
-            if url_g:
-                idxg = load_index_from_url(url_g, code_field, name_field)
-                if idxg: new_idx["gmina"] = idxg
-            if url_p:
-                idxp = load_index_from_url(url_p, code_field, name_field)
-                if idxp: new_idx["powiat"] = idxp
-            if url_w:
-                idxw = load_index_from_url(url_w, code_field, name_field)
-                if idxw: new_idx["woj"] = idxw
-            if new_idx:
-                st.session_state["official_admin"] = new_idx
-                st.session_state["official_admin_country"] = iso2
-                st.success("✅ Admin data loaded")
-
-    # Test connectivity
-    if st.sidebar.button("🧪 Test OSRM Connection"):
-        try:
-            o = (DEFAULT_REF['lat'], DEFAULT_REF['lon'])
-            d = (50.1109, 8.6821)
-            dist_km, dur_min = route_via_osrm(o, d)
-            st.sidebar.success(f"✅ Connected: {dist_km:.1f} km, {dur_min:.0f} min")
-        except Exception as e:
-            st.sidebar.error(f"❌ Failed: {str(e)[:100]}")
-
-    # Cache management
-    if st.sidebar.button("🗑️ Clear Route Cache"):
-        st.session_state["route_cache"] = {}
-        st.sidebar.success("✅ Cache cleared")
-
-    return (topn, pause_every, pause_secs, use_ref, ref_name, ref_lat, ref_lon, 
-            enrich_osm_admin, include_highway, include_catchment, catchment_radius)
+    st.sidebar.subheader("API Rate Limiting")
+    pause_every = st.sidebar.number_input("Pause after N requests", value=10, min_value=1)
+    pause_secs = st.sidebar.number_input("Pause duration (seconds)", value=1.0, min_value=0.1)
+    
+    st.sidebar.subheader("Reference Location (Outbound)")
+    use_ref = st.sidebar.checkbox("Include reference location", value=True)
+    ref_name = st.sidebar.text_input("Reference name", value=DEFAULT_REF["name"])
+    ref_lat = st.sidebar.number_input("Reference latitude", value=DEFAULT_REF["lat"])
+    ref_lon = st.sidebar.number_input("Reference longitude", value=DEFAULT_REF["lon"])
+    
+    st.sidebar.subheader("Enrichments")
+    enrich_osm_admin = st.sidebar.checkbox("Enrich with OSM admin data", value=ENRICH_DEFAULT_OSM_ADMIN)
+    include_highway = st.sidebar.checkbox("Include nearest highway", value=True)
+    include_catchment = st.sidebar.checkbox("Include catchment analysis", value=True)
+    catchment_radius = st.sidebar.slider("Catchment radius (km)", 25, 150, 50)
+    
+    return topn, pause_every, pause_secs, use_ref, ref_name, ref_lat, ref_lon, enrich_osm_admin, include_highway, include_catchment, catchment_radius
 
 def download_buttons_area():
-    """Template download section"""
-    st.subheader("📁 Templates")
-    st.caption("Download Excel templates with correct headers and example data")
-    
-    files = template_files()
-    cols = st.columns(3)
-    
-    with cols[0]:
-        st.download_button("📋 Sites.xlsx", data=files["Sites.xlsx"], 
-                          file_name="Sites.xlsx", use_container_width=True)
-    with cols[1]:
-        st.download_button("✈️ Airports.xlsx", data=files["Airports.xlsx"], 
-                          file_name="Airports.xlsx", use_container_width=True)
-    with cols[2]:
-        st.download_button("🚢 Seaports.xlsx", data=files["Seaports.xlsx"], 
-                          file_name="Seaports.xlsx", use_container_width=True)
+    """Download template files"""
+    st.subheader("📥 Download Templates")
+    templates = template_files()
+    cols = st.columns(len(templates))
+    for col, (fname, fcontent) in zip(cols, templates.items()):
+        with col:
+            st.download_button(
+                label=f"📄 {fname}",
+                data=fcontent,
+                file_name=fname,
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            )
 
-def upload_area() -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
-    """File upload section"""
-    st.subheader("📤 Upload Your Data")
-    
-    c1, c2, c3 = st.columns(3)
-    sites_file = c1.file_uploader("Sites.xlsx", type=["xlsx"], key="sites_up")
-    airports_file = c2.file_uploader("Airports.xlsx", type=["xlsx"], key="airports_up")
-    seaports_file = c3.file_uploader("Seaports.xlsx", type=["xlsx"], key="seaports_up")
-
-    sites_df = airports_df = seaports_df = None
-
-    def _read_xlsx(up: UploadedFile, sheet: str) -> pd.DataFrame:
-        return pd.read_excel(up, engine="openpyxl", sheet_name=sheet)
-
-    if sites_file is not None:
-        try:
-            sites_df = _read_xlsx(sites_file, "Sites")
-            miss = _validate_columns(sites_df, REQUIRED_SITES_COLS)
-            if miss:
-                st.error(f"❌ Sites.xlsx missing: {', '.join(miss)}")
-                sites_df = None
-            else:
-                c1.success(f"✅ {len(sites_df)} sites loaded")
-        except Exception as e:
-            st.error(f"❌ Error reading Sites.xlsx: {str(e)}")
-
-    if airports_file is not None:
-        try:
-            airports_df = _read_xlsx(airports_file, "Airports")
-            miss = _validate_columns(airports_df, REQUIRED_AIRPORTS_COLS)
-            if miss:
-                st.error(f"❌ Airports.xlsx missing: {', '.join(miss)}")
-                airports_df = None
-            else:
-                c2.success(f"✅ {len(airports_df)} airports loaded")
-        except Exception as e:
-            st.error(f"❌ Error reading Airports.xlsx: {str(e)}")
-
-    if seaports_file is not None:
-        try:
-            seaports_df = _read_xlsx(seaports_file, "Seaports")
-            miss = _validate_columns(seaports_df, REQUIRED_SEAPORTS_COLS)
-            if miss:
-                st.error(f"❌ Seaports.xlsx missing: {', '.join(miss)}")
-                seaports_df = None
-            else:
-                c3.success(f"✅ {len(seaports_df)} seaports loaded")
-        except Exception as e:
-            st.error(f"❌ Error reading Seaports.xlsx: {str(e)}")
-
-    return sites_df, airports_df, seaports_df
-
-def results_downloads(df: pd.DataFrame, ref_name: str = None, catchment_radius: int = 50, 
-                     filename_prefix: str = "results"):
-    """Download section with multiple export formats"""
-    st.subheader("💾 Download Results")
+def upload_area():
+    """Upload files"""
+    st.subheader("📤 Upload Data")
     
     col1, col2, col3 = st.columns(3)
     
-    # CSV export
-    with col1:
-        csv_bytes = df.to_csv(index=False).encode("utf-8")
-        st.download_button("📄 CSV Format", data=csv_bytes, 
-                          file_name=f"{filename_prefix}.csv",
-                          use_container_width=True)
+    sites_file = col1.file_uploader("Sites", type=["xlsx", "csv"], key="sites")
+    airports_file = col2.file_uploader("Airports", type=["xlsx", "csv"], key="airports")
+    seaports_file = col3.file_uploader("Seaports", type=["xlsx", "csv"], key="seaports")
     
-    # Excel export
-    with col2:
-        bio = io.BytesIO()
-        with pd.ExcelWriter(bio, engine="xlsxwriter") as xw:
-            df.to_excel(xw, index=False, sheet_name="Results")
-        st.download_button("📊 Excel Format", data=bio.getvalue(), 
-                          file_name=f"{filename_prefix}.xlsx",
-                          use_container_width=True)
+    sites_df = airports_df = seaports_df = None
     
-    # Site Selection Tool format
-    with col3:
-        df_long = create_site_selection_format(df, ref_name=ref_name, catchment_radius=catchment_radius)
-        bio_long = io.BytesIO()
-        with pd.ExcelWriter(bio_long, engine="xlsxwriter") as xw:
-            df_long.to_excel(xw, index=False, sheet_name="SiteSelection")
-        st.download_button("🎯 Site Selection Format", 
-                          data=bio_long.getvalue(),
-                          file_name=f"{filename_prefix}_site_selection.xlsx",
-                          help="Long format with one row per site-destination pair",
-                          use_container_width=True)
+    if sites_file:
+        sites_df = pd.read_excel(sites_file) if sites_file.name.endswith('.xlsx') else pd.read_csv(sites_file)
+        if not all(c in sites_df.columns for c in REQUIRED_SITES_COLS):
+            st.error(f"Sites must have: {REQUIRED_SITES_COLS}")
+            return None, None, None
+    
+    if airports_file:
+        airports_df = pd.read_excel(airports_file) if airports_file.name.endswith('.xlsx') else pd.read_csv(airports_file)
+        if not all(c in airports_df.columns for c in REQUIRED_AIRPORTS_COLS):
+            st.error(f"Airports must have: {REQUIRED_AIRPORTS_COLS}")
+            return None, None, None
+    
+    if seaports_file:
+        seaports_df = pd.read_excel(seaports_file) if seaports_file.name.endswith('.xlsx') else pd.read_csv(seaports_file)
+        if not all(c in seaports_df.columns for c in REQUIRED_SEAPORTS_COLS):
+            st.error(f"Seaports must have: {REQUIRED_SEAPORTS_COLS}")
+            return None, None, None
+    
+    return sites_df, airports_df, seaports_df
 
-def display_catchment_summary(df: pd.DataFrame, catchment_radius: int):
-    """Display catchment area summary statistics"""
-    st.subheader("👥 Labor Market Analysis")
+def results_downloads(df_res: pd.DataFrame, ref_name: str = None, catchment_radius: int = 50, filename_prefix: str = "results"):
+    """Download results in various formats"""
+    st.subheader("📥 Download Results")
     
-    # Calculate totals
+    col1, col2, col3 = st.columns(3)
+    
+    # Excel
+    with col1:
+        b = io.BytesIO()
+        with pd.ExcelWriter(b, engine="xlsxwriter") as xw:
+            df_res.to_excel(xw, sheet_name="Results", index=False)
+        st.download_button(
+            label="📊 Excel",
+            data=b.getvalue(),
+            file_name=f"{filename_prefix}.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
+    
+    # CSV
+    with col2:
+        csv_data = df_res.to_csv(index=False)
+        st.download_button(
+            label="📄 CSV",
+            data=csv_data,
+            file_name=f"{filename_prefix}.csv",
+            mime="text/csv"
+        )
+    
+    # Site Selection Format
+    with col3:
+        df_long = create_site_selection_format(df_res, ref_name=ref_name, catchment_radius=catchment_radius)
+        b = io.BytesIO()
+        with pd.ExcelWriter(b, engine="xlsxwriter") as xw:
+            df_long.to_excel(xw, sheet_name="Site Selection", index=False)
+        st.download_button(
+            label="🎯 Site Selection Format",
+            data=b.getvalue(),
+            file_name=f"{filename_prefix}_site_selection.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
+
+def display_catchment_summary(df_res: pd.DataFrame, catchment_radius: int = 50):
+    """Display catchment analysis summary"""
+    st.subheader(f"👥 Catchment Analysis ({catchment_radius}km)")
+    
     pop_col = f"Catchment Population ({catchment_radius}km)"
-    unemployed_col = f"Catchment Unemployed ({catchment_radius}km)"
-    active_col = f"Catchment Active Pop ({catchment_radius}km)"
-    employed_col = f"Catchment Employed ({catchment_radius}km)"
+    if pop_col not in df_res.columns:
+        return
     
-    if pop_col in df.columns:
-        col1, col2, col3, col4 = st.columns(4)
-        
-        with col1:
-            total_pop = df[pop_col].sum()
-            st.metric("Total Population", f"{total_pop:,.0f}")
-        
-        with col2:
-            if unemployed_col in df.columns:
-                total_unemployed = df[unemployed_col].sum()
-                st.metric("Total Unemployed", f"{total_unemployed:,.0f}")
-        
-        with col3:
-            if active_col in df.columns:
-                total_active = df[active_col].sum()
-                st.metric("Total Active Population", f"{total_active:,.0f}")
-        
-        with col4:
-            if employed_col in df.columns:
-                total_employed = df[employed_col].sum()
-                st.metric("Total Employed", f"{total_employed:,.0f}")
-        
-        # Create ranking table
-        st.subheader("📊 Site Rankings by Labor Market Potential")
-        
-        summary_data = []
-        for _, row in df.iterrows():
-            if pop_col in row:
-                summary_data.append({
-                    "Site": row["Site Name"],
-                    "Population": row.get(pop_col, 0),
-                    "Unemployed": row.get(unemployed_col, 0),
-                    "Active Pop": row.get(active_col, 0),
-                    "Score": 0
-                })
-        
-        if summary_data:
-            summary_df = pd.DataFrame(summary_data)
-            
-            # Calculate score
-            if summary_df["Population"].max() > 0:
-                max_pop = summary_df["Population"].max()
-                max_unemployed = summary_df["Unemployed"].max() if summary_df["Unemployed"].max() > 0 else 1
-                
-                summary_df["Score"] = (
-                    (summary_df["Population"] / max_pop) * 60 +
-                    (summary_df["Unemployed"] / max_unemployed) * 40
-                )
-                summary_df["Score"] = summary_df["Score"].round(1)
-                summary_df = summary_df.sort_values("Score", ascending=False)
-                
-                st.dataframe(summary_df, use_container_width=True, hide_index=True)
+    col1, col2, col3 = st.columns(3)
+    
+    with col1:
+        avg_pop = df_res[pop_col].mean()
+        st.metric("Avg Population", f"{avg_pop:,.0f}")
+    
+    with col2:
+        max_pop = df_res[pop_col].max()
+        st.metric("Max Population", f"{max_pop:,.0f}")
+    
+    with col3:
+        min_pop = df_res[pop_col].min()
+        st.metric("Min Population", f"{min_pop:,.0f}")
 
 def maybe_map(df: pd.DataFrame, airports: pd.DataFrame, seaports: pd.DataFrame):
-    """Create interactive map with all locations"""
+    """Show interactive map"""
     if not _HAS_MAP:
-        st.info("Map preview requires folium and streamlit-folium packages")
+        st.warning("Folium not available - map disabled")
         return
     
-    if df is None or df.empty:
-        return
+    m = folium.Map(location=[51.0, 10.0], zoom_start=4)
+    Fullscreen().add_to(m)
     
-    mean_lat = float(df["Latitude"].mean())
-    mean_lon = float(df["Longitude"].mean())
-    m = folium.Map(location=[mean_lat, mean_lon], zoom_start=5)
-    
-    # Add fullscreen button
-    try:
-        Fullscreen(position="topleft").add_to(m)
-    except:
-        pass
-    
-    # Add layer groups
     site_group = folium.FeatureGroup(name="Sites", show=True)
     airport_group = folium.FeatureGroup(name="Airports", show=True)
     seaport_group = folium.FeatureGroup(name="Seaports", show=True)
     
-    # Add sites
+    # Sites
     for _, r in df.iterrows():
-        folium.CircleMarker(
-            [float(r["Latitude"]), float(r["Longitude"])],
-            radius=5,
-            popup=folium.Popup(f"""
-                <b>{r['Site Name']}</b><br>
-                Project: {r.get('Project ID', '')}<br>
-                Site ID: {r.get('Site ID', '')}<br>
-                Airport: {r.get('Distance to Airport (km)', 'N/A')} km<br>
-                Seaport: {r.get('Distance to Seaport (km)', 'N/A')} km<br>
-                Highway: {r.get('Distance to Highway (km)', 'N/A')} km
-            """, max_width=300),
-            tooltip=str(r["Site Name"]),
-            fill=True,
-            color='blue',
-            fillColor='lightblue'
-        ).add_to(site_group)
+        if pd.notna(r.get("Latitude")) and pd.notna(r.get("Longitude")):
+            folium.CircleMarker(
+                [float(r["Latitude"]), float(r["Longitude"])],
+                radius=8,
+                color="blue",
+                fill=True,
+                popup=f"📍 {r.get('Site Name', '')}",
+                tooltip=r.get("Site Name", "")
+            ).add_to(site_group)
     
-    # Add unique airports
+    # Airports
     added_airports = set()
     for _, r in df.iterrows():
         a_name = r.get("Nearest Airport")
@@ -1517,7 +979,7 @@ def maybe_map(df: pd.DataFrame, airports: pd.DataFrame, seaports: pd.DataFrame):
                     tooltip=f"✈️ {a_name}"
                 ).add_to(airport_group)
     
-    # Add unique seaports
+    # Seaports
     added_seaports = set()
     for _, r in df.iterrows():
         p_name = r.get("Nearest Seaport")
@@ -1534,7 +996,7 @@ def maybe_map(df: pd.DataFrame, airports: pd.DataFrame, seaports: pd.DataFrame):
                     tooltip=f"🚢 {p_name}"
                 ).add_to(seaport_group)
     
-    # Add reference location
+    # Reference location (Outbound)
     ref_lat = st.session_state.get("ref_lat")
     ref_lon = st.session_state.get("ref_lon")
     ref_name = st.session_state.get("ref_name")
@@ -1542,8 +1004,8 @@ def maybe_map(df: pd.DataFrame, airports: pd.DataFrame, seaports: pd.DataFrame):
         folium.Marker(
             [float(ref_lat), float(ref_lon)],
             icon=folium.Icon(icon="star", color="green"),
-            popup=f"⭐ {ref_name}",
-            tooltip=f"⭐ Reference: {ref_name}"
+            popup=f"⭐ Outbound: {ref_name}",
+            tooltip=f"⭐ Outbound: {ref_name}"
         ).add_to(m)
     
     # Add groups to map
@@ -1566,6 +1028,11 @@ def main():
     # Get sidebar settings
     (topn, pause_every, pause_secs, use_ref, ref_name, ref_lat, ref_lon, 
      enrich_osm_admin, include_highway, include_catchment, catchment_radius) = sidebar()
+    
+    # Store ref info in session for map
+    st.session_state["ref_lat"] = ref_lat
+    st.session_state["ref_lon"] = ref_lon
+    st.session_state["ref_name"] = ref_name
     
     # Templates and upload
     download_buttons_area()
